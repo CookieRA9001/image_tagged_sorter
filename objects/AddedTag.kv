@@ -1,0 +1,37 @@
+<AddedTag@Widget>
+    tagName: ""
+    size_hint: (None,None)
+    height: 35
+    textWidth: 0
+    min_width: 30
+    width: root.min_width + root.textWidth
+
+    canvas:
+        Color:
+            rgba: 0, 0, 0, 0.5
+        BoxShadow:
+            inset: True
+            pos: root.pos
+            size: root.size
+            blur_radius: 25
+            border_radius: self.height/2, self.height/2, self.height/2, self.height/2
+
+    BoxLayout:
+        orientation: "horizontal"
+        size: root.size
+        pos: root.pos
+        padding: (8, 3)
+        spacing: 3
+
+        Label:
+            text: root.tagName
+            size_hint: (None,1)
+            width: root.width - 30
+        
+        Button:
+            text: "X"
+            background_color: (0,0,0,0)
+            bold: True
+            width: 10
+            size_hint: (None,1)
+            on_release: root.removeSelf()

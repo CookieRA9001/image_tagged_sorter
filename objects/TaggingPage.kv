@@ -1,0 +1,75 @@
+<TaggingPage>
+    currentImage: currentImage
+    imageNameInput: imageNameInput
+    searchTagInput: searchTagInput
+    tagBox: tagBox
+    addedTagBox: addedTagBox
+
+    GridLayout:
+        cols: 2
+        size: (root.width, root.height)
+        
+        BoxLayout:
+            padding: (10, 10)
+
+            Image:
+                id: currentImage
+                fit_mode: "scale-down"
+
+        StackLayout:
+            padding: (10, 10)
+            spacing: 10
+
+            TextInput:
+                id: imageNameInput
+                multiline: False
+                size_hint: (1, None)
+                height: 40
+
+            BoxLayout:
+                size_hint: (1, None)
+                orientation: "vertical"
+                height: 160
+
+                TextInput:
+                    id: searchTagInput
+                    multiline: False
+                    size_hint: (1, None)
+                    height: 40
+                    on_text: root.searchTags(self.text)
+
+                StackLayout:
+                    id: tagBox
+                    height: 120
+                    size_hint: (1, None)
+                    orientation: "tb-lr"
+
+                    canvas:
+                        Color:
+                            rgba: (0.9,0.9,0.9,1)
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+
+                    TagSelect:
+                        text: "Add New Tag"
+                        on_release: root.openAddTagPopup()
+
+            StackLayout:
+                id: addedTagBox
+                size_hint: (1, None)
+                height: root.height-290
+                spacing: 5
+                padding: 5
+
+                canvas:
+                    Color:
+                        rgba: (0.8,0.8,0.8,1)
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Button:
+                size_hint: (1, None)
+                height: 40
+                text: "Next"

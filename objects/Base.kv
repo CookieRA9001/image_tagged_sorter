@@ -1,0 +1,47 @@
+<Base>
+    tab: tab
+    tagTab: tagTab
+    searchTab: searchTab
+    paletTab: paletTab
+
+    BoxLayout:
+        orientation: 'vertical'
+        size: (root.width, root.height)
+
+        GridLayout:
+            cols: 3
+            rows: 1
+            col_default_width: 200
+            row_default_height: 40
+            row_force_default: True
+            col_force_default: True
+            size: (root.width, 40)
+            size_hint: (None, None)
+            
+            Tab:
+                text: "Tagging"
+                id: tagTab
+            
+            Tab:
+                text: "Search"
+                id: searchTab
+
+            Tab:
+                text: "Palet"
+                id: paletTab
+
+        GridLayout:
+            cols: 1
+            id: tab
+            size: (root.width, root.height)
+
+            canvas:
+                Color:
+                    rgba: (0.7,0.7,0.7,1)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+<Tab@Button>
+    font_size: 20
+    background_color: (0.9, 0.9, 0.9, 1)

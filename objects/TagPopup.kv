@@ -1,0 +1,28 @@
+<TagPopup@Popup>
+    auto_dismiss: False
+    title: "Add a new Tag"
+    size_hint: 0.6, 0.2
+    pos_hint: {"x": 0.2, "top": 0.7}
+
+    tagNameInput: tagNameInput
+
+    StackLayout:
+        spacing: 10
+        padding: 10
+
+        TextInput:
+            id: tagNameInput
+            size_hint: (0.75, 1)
+            focus: True
+
+        Button:
+            text: "Add"
+            font_size: 28
+            on_press: root.addtag(tagNameInput.text)
+            size_hint: (0.15, 1)
+
+        Button:
+            text: "X"
+            font_size: 28
+            on_release: root.dismiss()
+            size_hint: (0.1, 1)
