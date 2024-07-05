@@ -1,17 +1,19 @@
 import os
 import sys
-import json 
+import json
+import shutil 
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.popup import Popup
 from kivy.uix.button import Button
-from kivy.properties import ObjectProperty
+from kivy.uix.filechooser import FileChooserIconView
+#from kivy.properties import ObjectProperty
 from kivy.lang import Builder
 
 if not os.path.exists("objects"):
     print("KV Object Dir is missing! Terrminating script")
     sys.exit()
-    
+
 Builder.load_file('objects/TagPopup.kv')
 Builder.load_file('objects/AddedTag.kv')
 Builder.load_file('objects/TagSelect.kv')
@@ -45,9 +47,6 @@ class TagPopup(Popup):
         super().__init__(**kwargs)
 
     def addtag(self, text):
-        # TO-DO: check if tag exists. if yes, just add the existing tag
-        # TO-DO: create new tag's json file
-        # TO-DO: update tag json file
         text = text.lower()
         
         if not text in TAGS: 
@@ -65,7 +64,6 @@ class TagSelect(Button):
 
     def __init__(self, tp, **kwargs):
         super().__init__(**kwargs)
-        print("init")
         self.taggingPage = tp
         self.bind(on_press=self.addTag)
 
@@ -94,6 +92,8 @@ class TaggingPage(Widget):
     tagSelects = [None, None, None]
     selectedTags = []
     savedSearchText = ""
+    selectedImages = []
+    currentImageIndex = -1
 
     def build(self):
         self.tagSelects[0] = TagSelect(self)
@@ -140,13 +140,66 @@ class TaggingPage(Widget):
         pass
     
     def removeTag(self, tag):
-        # TO-DO: remove the UI element
         self.selectedTags.remove(tag)
-        pass
 
     def saveTaggedImage(self):
-        # TO-DO: everthing
-        pass
+        if self.currentImageIndex == -1:
+            return
+        
+        # change directory to script root
+        abspath = os.path.abspath(__file__)
+        dname = os.path.dirname(abspath)
+        os.chdir(dname)
+
+        if os.path.exists("database/images/" + self.imageNameInput.text):
+            self.imageNameInput.foreground_color = (1,0,0,1)
+            return
+
+        #file = open("database/images/" + self.imageNameInput.text, "x")
+        shutil.copy(self.currentImage.source, "database/images/" + self.imageNameInput.text)
+        print("Image saved! Next")
+        self.nextImage()
+        self.imageNameInput.foreground_color = (0,0,0,1)
+
+    # TO-DO: switch to this?: https://kivymd.readthedocs.io/en/0.104.0/components/file-manager/index.html
+    def openImageSelect(self):
+        from plyer import filechooser
+        # would be nice to add "image only but cant find how to do it (to lazy)"
+        filechooser.open_file(on_selection = self.selected, multiple=True)
+        
+    def selected(self, selection):
+        self.selectedImages = selection
+        self.currentImageIndex = -1
+        self.imageBoxBtn.text = ""
+        self.nextImage()
+    
+    def nextImage(self):
+        self.currentImageIndex += 1
+        # TO-DO: Clear all selected tags
+        self.resetImageTags()
+
+        if self.currentImageIndex >= len(self.selectedImages):
+            self.outOfImages()
+            return
+        
+        self.currentImage.source = self.selectedImages[self.currentImageIndex]
+        name = os.path.basename(self.selectedImages[self.currentImageIndex])
+        self.imageNameInput.text = name
+
+    def outOfImages(self):
+        self.imageBoxBtn.text = "Click me to select image/s"
+        self.selectedImages = []
+        self.imageNameInput.text = ""
+        self.currentImage.source = ""
+        self.currentImageIndex = -1
+    
+    def resetImageTags(self):
+        tags = [i for i in self.addedTagBox.children]
+        for tag in tags:
+            if isinstance(tag, AddedTag):
+                self.addedTagBox.remove_widget(tag)
+        self.selectedTags = []
+        self.searchTags()
 
 class Base(Widget):
     pass

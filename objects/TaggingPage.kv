@@ -4,17 +4,31 @@
     searchTagInput: searchTagInput
     tagBox: tagBox
     addedTagBox: addedTagBox
+    imageBoxBtn: imageBoxBtn
 
     GridLayout:
         cols: 2
         size: (root.width, root.height)
         
-        BoxLayout:
+        FloatLayout:
             padding: (10, 10)
 
             Image:
                 id: currentImage
-                fit_mode: "scale-down"
+                fit_mode: "contain"
+                size_hint: (0.96,0.96)
+                pos_hint: {"x": 0.02, "top": 0.98}
+
+            Button:
+                id: imageBoxBtn
+                text: "Click me to select image/s"
+                color: (0,0,0,1)
+                size_hint: (1, 1)
+                pos_hint: {"x": 0, "top": 1}
+                halign: "center"
+                valign: "middle"
+                background_color: (0,0,0,0)
+                on_release: root.openImageSelect()
 
         StackLayout:
             padding: (10, 10)
@@ -73,3 +87,4 @@
                 size_hint: (1, None)
                 height: 40
                 text: "Next"
+                on_release: root.saveTaggedImage()
