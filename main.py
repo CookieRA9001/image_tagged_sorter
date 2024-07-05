@@ -137,7 +137,6 @@ class TaggingPage(Widget):
         addedTag.setName(tag)
         self.addedTagBox.add_widget(addedTag)
         self.selectedTags.append(tag)
-        pass
     
     def removeTag(self, tag):
         self.selectedTags.remove(tag)
@@ -150,14 +149,22 @@ class TaggingPage(Widget):
         abspath = os.path.abspath(__file__)
         dname = os.path.dirname(abspath)
         os.chdir(dname)
+        new_file_name = self.imageNameInput.text
 
-        if os.path.exists("database/images/" + self.imageNameInput.text):
+        if os.path.exists("database/images/" + new_file_name):
             self.imageNameInput.foreground_color = (1,0,0,1)
             return
 
-        #file = open("database/images/" + self.imageNameInput.text, "x")
-        shutil.copy(self.currentImage.source, "database/images/" + self.imageNameInput.text)
-        print("Image saved! Next")
+        shutil.copy(self.currentImage.source, "database/images/" + new_file_name)
+        
+        for tag in self.selectedTags:
+            # soruce: https://www.geeksforgeeks.org/append-to-json-file-using-python/
+            with open('database/taggedFiles/' + tag + ".json",'r+') as file:
+                file_data = json.load(file)
+                file_data["images"].append(new_file_name)
+                file.seek(0)
+                json.dump(file_data, file)
+
         self.nextImage()
         self.imageNameInput.foreground_color = (0,0,0,1)
 
@@ -175,7 +182,6 @@ class TaggingPage(Widget):
     
     def nextImage(self):
         self.currentImageIndex += 1
-        # TO-DO: Clear all selected tags
         self.resetImageTags()
 
         if self.currentImageIndex >= len(self.selectedImages):
