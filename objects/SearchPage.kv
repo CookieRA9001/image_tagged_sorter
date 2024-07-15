@@ -1,2 +1,99 @@
 <SearchPage>
-    
+    imageList1: imageList1
+    imageList2: imageList2
+    imageList3: imageList3
+    searchInput: searchInput
+    searchTagInput: searchTagInput
+    tagBox: tagBox
+    addedTagBox: addedTagBox
+
+    GridLayout:
+        cols: 2
+        size: (root.width, root.height)
+
+        ScrollView:
+            size_hint: (0.7, 1)
+            do_scroll_y: True
+            do_scroll_x: False
+
+            BoxLayout:
+                orientation: "horizontal"
+                size_hint: (1, None)
+                padding: (10, 10)
+                spacing: 10
+                
+                StackLayout:
+                    id: imageList1
+                    spacing: 10
+
+                StackLayout:
+                    id: imageList2
+                    spacing: 10
+
+                StackLayout:
+                    id: imageList3
+                    spacing: 10
+        
+        StackLayout:
+            size_hint: (0.3, 1)
+            padding: (10, 10)
+            spacing: 10
+
+            canvas:
+                Color:
+                    rgba: (0.8,0.8,0.8,1)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            TextInput:
+                id: searchInput
+                multiline: False
+                size_hint: (1, None)
+                height: 40
+                on_text: root.searchByName(self.text)
+
+            BoxLayout:
+                size_hint: (1, None)
+                orientation: "vertical"
+                height: 130
+
+                TextInput:
+                    id: searchTagInput
+                    multiline: False
+                    size_hint: (1, None)
+                    height: 40
+                    on_text: root.searchTags(self.text)
+
+                StackLayout:
+                    id: tagBox
+                    height: 90
+                    size_hint: (1, None)
+                    orientation: "tb-lr"
+
+                    canvas:
+                        Color:
+                            rgba: (0.9,0.9,0.9,1)
+                        Rectangle:
+                            pos: self.pos
+                            size: self.size
+
+            StackLayout:
+                id: addedTagBox
+                size_hint: (1, None)
+                height: root.height-260
+                spacing: 5
+                padding: 5
+
+                canvas:
+                    Color:
+                        rgba: (0.9,0.9,0.9,1)
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+            Button:
+                size_hint: (1, None)
+                height: 40
+                text: "Clear"
+                on_release: root.clearFilters()

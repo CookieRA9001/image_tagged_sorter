@@ -1,16 +1,16 @@
-* tab switching
-* search page design
-    * list of images
-    * search by name input
-    * tag fillter:
-        * show a tag search popup
-        * click tag to select it for the fillter
+X tab switching
+X search page design
+    X list of images
+    X search by name input
+    X tag fillter:
+        X show a tag search popup
+        X click tag to select it for the fillter
 * palet page design
     * list of images
     * remove buttons
     * open folder button
     * selected image half screen view
-* make search page ui elements
+X make search page ui elements
 * add search page logic
 * make pallet page ui elements
 * add pallet page logic
@@ -20,3 +20,10 @@
 
 Notes:
 * kv file added widgets will not get the class functions. only if they are added with code (Widget()).
+
+Future:
+* search blacklist images
+* saved pallets
+* load next 100 images
+* or/and/not search modes for each tag
+* make the 3 image columns more equil with more dynamic logic

@@ -6,8 +6,6 @@ from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.popup import Popup
 from kivy.uix.button import Button
-from kivy.uix.filechooser import FileChooserIconView
-#from kivy.properties import ObjectProperty
 from kivy.lang import Builder
 
 if not os.path.exists("objects"):
@@ -18,6 +16,7 @@ Builder.load_file('objects/Tab.kv')
 Builder.load_file('objects/TagPopup.kv')
 Builder.load_file('objects/AddedTag.kv')
 Builder.load_file('objects/TagSelect.kv')
+Builder.load_file('objects/SearchedImage.kv')
 Builder.load_file('objects/Base.kv')
 Builder.load_file('objects/TaggingPage.kv')
 Builder.load_file('objects/SearchPage.kv')
@@ -36,11 +35,19 @@ if not os.path.exists("database/images"):
 
 TAGS = json.load(open('database/tags.json'))["tags"]
 TAGS = [t.lower() for t in TAGS]
+TAGGED_IMAGES = {}
+IMAGES = []
+PATH = os.getcwd()+"\\database\\images\\"
 
 for i in TAGS:
     if not os.path.exists("database/taggedFiles/" + i + ".json"):
         with open("database/taggedFiles/" + i + ".json", 'w') as file: 
             file.write("{\"images\": []}")
+    TAGGED_IMAGES[i] = json.load(open("database/taggedFiles/" + i + ".json"))["images"]
+
+    for img in TAGGED_IMAGES[i]:
+        IMAGES.append(img)
+    IMAGES = list(set(IMAGES))
 
 class TagPopup(Popup):
     taggingPage = None
@@ -98,14 +105,11 @@ class TaggingPage(Widget):
     currentImageIndex = -1
 
     def build(self):
-        self.tagSelects[0] = TagSelect(self)
-        self.tagSelects[1] = TagSelect(self)
-        self.tagSelects[2] = TagSelect(self)
-        
-        self.tagBox.add_widget(self.tagSelects[0])
-        self.tagBox.add_widget(self.tagSelects[1])
-        self.tagBox.add_widget(self.tagSelects[2])
-        
+        self.tagSelects = [None, None, None]
+        self.selectedTags = []
+        self.savedSearchText = ""
+        self.selectedImages = []
+        self.currentImageIndex = -1
         self.updateTagSelects(TAGS)
 
     def searchTags(self, text = savedSearchText):
@@ -202,16 +206,112 @@ class TaggingPage(Widget):
         self.currentImageIndex = -1
     
     def resetImageTags(self):
-        tags = [i for i in self.addedTagBox.children]
-        for tag in tags:
-            if isinstance(tag, AddedTag):
-                self.addedTagBox.remove_widget(tag)
+        self.addedTagBox.clear_widgets()
         self.selectedTags = []
         self.searchTags()
 
-class SearchPage(Widget):
-    def build(self):
+class SearchedImage(Widget):
+    def addToPallet(self):
         pass
+
+class SearchPage(Widget):
+    filterTags = [] # "and" search
+    searchText = ""
+    tagSearchText = ""
+    loadedImage = []
+    tagSelects = [None, None, None]
+
+    def build(self):
+        self.tagSelects = [None, None, None]
+        self.clearFilters()
+        pass
+
+    def searchForImages(self):
+        self.loadedImage = []
+
+        if len(self.filterTags) == 0:
+            # to-do: remove the images that are in the pallet
+            temp = [i for i in IMAGES if self.searchText in i]
+            for i in range(0, min(100, len(temp))):
+                self.loadedImage.append(temp[i])
+
+        else:
+            # to-do: remove the images that are in the pallet
+            temp = TAGGED_IMAGES[self.filterTags[0]].copy()
+            for tag in self.filterTags:
+                temp = list(set(temp).intersection(TAGGED_IMAGES[tag])) # brute force
+
+            temp = [i for i in temp if self.searchText in i]
+            for i in range(0, min(100, len(temp))):
+                self.loadedImage.append(temp[i])
+
+        self.loadImages()
+    
+    def loadImages(self):
+        index = 1
+        self.imageList1.clear_widgets()
+        self.imageList2.clear_widgets()
+        self.imageList3.clear_widgets()
+        for img in self.loadedImage:
+            loaded_img = SearchedImage()
+            loaded_img.img.source = PATH + img
+            if index == 1:
+                self.imageList1.add_widget(loaded_img)
+            elif index == 2:
+                self.imageList2.add_widget(loaded_img)
+            elif index == 3:
+                self.imageList3.add_widget(loaded_img)
+            index += 1
+            if index == 4:
+                index = 1
+
+    def searchByName(self, text = searchText):
+        self.searchText = text
+        self.searchForImages()
+
+    def clearFilters(self):
+        self.searchInput.text = ""
+        self.searchTagInput.text = ""
+        self.filterTags = []
+        self.searchText = ""
+        self.tagSearchText = ""
+        self.addedTagBox.clear_widgets()
+        self.searchTags()
+        self.searchForImages()
+
+    def searchTags(self, text = tagSearchText):
+        self.tagSearchText = text
+        res = [i for i in TAGS if text in i and not i in self.filterTags] # Very inefficiant
+        self.updateTagSelects(res)
+    
+    def updateTagSelects(self, tags):
+        self.updateTagSelect(0, tags)
+        self.updateTagSelect(1, tags)
+        self.updateTagSelect(2, tags)
+    
+    def updateTagSelect(self, index, tags):
+        if len(tags) > index:
+            if self.tagSelects[index] == None:
+                self.tagSelects[index] = TagSelect(self)
+                self.tagBox.add_widget(self.tagSelects[index])
+            self.tagSelects[index].text = tags[index]
+            
+        elif not self.tagSelects[index] == None:
+            self.tagBox.remove_widget(self.tagSelects[index])
+            self.tagSelects[index] = None
+
+    def addTag(self, tag):
+        if tag in self.filterTags: 
+            return
+        addedTag = AddedTag(self)
+        addedTag.setName(tag)
+        self.addedTagBox.add_widget(addedTag)
+        self.filterTags.append(tag)
+        self.searchForImages()
+
+    def removeTag(self, tag):
+        self.filterTags.remove(tag)
+        self.searchForImages()
 
 class PalletPage(Widget):
     def build(self):
@@ -287,7 +387,6 @@ class Base(Widget):
         self.openPage = pp
         pp.build()
         self.currentPageName = "Pallet"
-
 
 class ImageSorterApp(App):
     def build(self):
