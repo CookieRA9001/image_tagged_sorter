@@ -19,7 +19,16 @@
             fit_mode: "contain"
             size_hint:(1,1)
             pos_hint: {"x": 0, "top": 1}
-
+        
+        Button:
+            color: (0,0,0,1)
+            size_hint: (1, 1)
+            pos_hint: {"x": 0, "top": 1}
+            halign: "center"
+            valign: "middle"
+            background_color: (0,0,0,0)
+            on_release: root.selectImage()
+        
         Button:
             text: "x"
             color: (0,0,0,1)

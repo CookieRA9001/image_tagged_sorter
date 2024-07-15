@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import shutil 
+import subprocess
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.popup import Popup
@@ -41,8 +42,12 @@ TAGS = [t.lower() for t in TAGS]
 TAGGED_IMAGES = {}
 IMAGES = []
 PATH = os.getcwd()+"\\database\\images\\"
-# to-do: load pallet from pallet folder
 PALLET = []
+# to-do: load pallet from pallet folder
+for file in os.listdir("database\pallet"):
+    filename = os.fsdecode(file)
+    PALLET.append(filename)
+print(PALLET)
 
 for i in TAGS:
     if not os.path.exists("database/taggedFiles/" + i + ".json"):
@@ -227,6 +232,7 @@ class SearchedImage(Widget):
         if not img in PALLET:
             PALLET.append(img)
             self.searchPage.searchForImages()
+            shutil.copy(self.img.source, "database/pallet/" + img)
 
 class SearchPage(Widget):
     filterTags = [] # "and" search
@@ -339,9 +345,13 @@ class PalletImage(Widget):
 
     def removeFromPallet(self):
         img = os.path.basename(self.img.source)
-        if not img in PALLET:
+        if img in PALLET:
             PALLET.remove(img)
             self.palletPage.loadImages()
+            os.remove("database/pallet/" + img) 
+
+    def selectImage(self):
+        self.palletPage.fullImageView.source = self.img.source
 
 class PalletPage(Widget):
     def build(self):
@@ -367,6 +377,9 @@ class PalletPage(Widget):
             index += 1
             if index == 4:
                 index = 1
+
+    def openPalletFolder(self):
+        subprocess.Popen(r'explorer "' + os.getcwd()+"\\database\\pallet\\")
 
 class Tab(Button):
     base = None
