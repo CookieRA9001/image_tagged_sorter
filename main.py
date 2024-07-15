@@ -17,6 +17,7 @@ Builder.load_file('objects/TagPopup.kv')
 Builder.load_file('objects/AddedTag.kv')
 Builder.load_file('objects/TagSelect.kv')
 Builder.load_file('objects/SearchedImage.kv')
+Builder.load_file('objects/PalletImage.kv')
 Builder.load_file('objects/Base.kv')
 Builder.load_file('objects/TaggingPage.kv')
 Builder.load_file('objects/SearchPage.kv')
@@ -32,12 +33,16 @@ if not os.path.exists("database/taggedFiles"):
     os.makedirs("database/taggedFiles")
 if not os.path.exists("database/images"):
     os.makedirs("database/images")
+if not os.path.exists("database/pallet"):
+    os.makedirs("database/pallet")
 
 TAGS = json.load(open('database/tags.json'))["tags"]
 TAGS = [t.lower() for t in TAGS]
 TAGGED_IMAGES = {}
 IMAGES = []
 PATH = os.getcwd()+"\\database\\images\\"
+# to-do: load pallet from pallet folder
+PALLET = []
 
 for i in TAGS:
     if not os.path.exists("database/taggedFiles/" + i + ".json"):
@@ -211,8 +216,17 @@ class TaggingPage(Widget):
         self.searchTags()
 
 class SearchedImage(Widget):
+    searchPage = None
+
+    def __init__(self, page, **kwargs):
+        self.searchPage = page
+        super().__init__(**kwargs)
+
     def addToPallet(self):
-        pass
+        img = os.path.basename(self.img.source)
+        if not img in PALLET:
+            PALLET.append(img)
+            self.searchPage.searchForImages()
 
 class SearchPage(Widget):
     filterTags = [] # "and" search
@@ -222,16 +236,18 @@ class SearchPage(Widget):
     tagSelects = [None, None, None]
 
     def build(self):
+        self.imageList1.bind(minimum_height=self.imageList1.setter('height'))
+        self.imageList2.bind(minimum_height=self.imageList2.setter('height'))
+        self.imageList3.bind(minimum_height=self.imageList3.setter('height'))
         self.tagSelects = [None, None, None]
         self.clearFilters()
-        pass
 
     def searchForImages(self):
         self.loadedImage = []
 
         if len(self.filterTags) == 0:
             # to-do: remove the images that are in the pallet
-            temp = [i for i in IMAGES if self.searchText in i]
+            temp = [i for i in IMAGES if self.searchText in i and not i in PALLET]
             for i in range(0, min(100, len(temp))):
                 self.loadedImage.append(temp[i])
 
@@ -240,8 +256,8 @@ class SearchPage(Widget):
             temp = TAGGED_IMAGES[self.filterTags[0]].copy()
             for tag in self.filterTags:
                 temp = list(set(temp).intersection(TAGGED_IMAGES[tag])) # brute force
-
-            temp = [i for i in temp if self.searchText in i]
+            
+            temp = [i for i in temp if self.searchText in i and not i in PALLET]
             for i in range(0, min(100, len(temp))):
                 self.loadedImage.append(temp[i])
 
@@ -253,7 +269,7 @@ class SearchPage(Widget):
         self.imageList2.clear_widgets()
         self.imageList3.clear_widgets()
         for img in self.loadedImage:
-            loaded_img = SearchedImage()
+            loaded_img = SearchedImage(self)
             loaded_img.img.source = PATH + img
             if index == 1:
                 self.imageList1.add_widget(loaded_img)
@@ -313,9 +329,44 @@ class SearchPage(Widget):
         self.filterTags.remove(tag)
         self.searchForImages()
 
+class PalletImage(Widget):
+    palletPage = None
+    selectedImageElement = None
+
+    def __init__(self, page, **kwargs):
+        self.palletPage = page
+        super().__init__(**kwargs)
+
+    def removeFromPallet(self):
+        img = os.path.basename(self.img.source)
+        if not img in PALLET:
+            PALLET.remove(img)
+            self.palletPage.loadImages()
+
 class PalletPage(Widget):
     def build(self):
-        pass
+        self.imageList1.bind(minimum_height=self.imageList1.setter('height'))
+        self.imageList2.bind(minimum_height=self.imageList2.setter('height'))
+        self.imageList3.bind(minimum_height=self.imageList3.setter('height'))
+        self.loadImages()
+
+    def loadImages(self):
+        index = 1
+        self.imageList1.clear_widgets()
+        self.imageList2.clear_widgets()
+        self.imageList3.clear_widgets()
+        for img in PALLET:
+            loaded_img = PalletImage(self)
+            loaded_img.img.source = PATH + img
+            if index == 1:
+                self.imageList1.add_widget(loaded_img)
+            elif index == 2:
+                self.imageList2.add_widget(loaded_img)
+            elif index == 3:
+                self.imageList3.add_widget(loaded_img)
+            index += 1
+            if index == 4:
+                index = 1
 
 class Tab(Button):
     base = None

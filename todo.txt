@@ -7,13 +7,14 @@ X search page design
         X click tag to select it for the fillter
 * palet page design
     * list of images
+    * selected image half screen view
     * remove buttons
     * open folder button
-    * selected image half screen view
 X make search page ui elements
-* add search page logic
+X add search page logic
 * make pallet page ui elements
 * add pallet page logic
+* save pallet images in a pallet folder
 * add image selected popup to search
 * add image tag editing popup with logic
 
