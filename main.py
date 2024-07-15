@@ -14,11 +14,14 @@ if not os.path.exists("objects"):
     print("KV Object Dir is missing! Terrminating script")
     sys.exit()
 
+Builder.load_file('objects/Tab.kv')
 Builder.load_file('objects/TagPopup.kv')
 Builder.load_file('objects/AddedTag.kv')
 Builder.load_file('objects/TagSelect.kv')
 Builder.load_file('objects/Base.kv')
 Builder.load_file('objects/TaggingPage.kv')
+Builder.load_file('objects/SearchPage.kv')
+Builder.load_file('objects/PalletPage.kv')
 
 ## INIT DIR
 if not os.path.exists("database"):
@@ -68,7 +71,6 @@ class TagSelect(Button):
         self.bind(on_press=self.addTag)
 
     def addTag(self, obj):
-        print(self.text)
         self.taggingPage.addTag(self.text)
         self.taggingPage.searchTags()
 
@@ -207,15 +209,90 @@ class TaggingPage(Widget):
         self.selectedTags = []
         self.searchTags()
 
+class SearchPage(Widget):
+    def build(self):
+        pass
+
+class PalletPage(Widget):
+    def build(self):
+        pass
+
+class Tab(Button):
+    base = None
+
+    def __init__(self, base, **kwargs):
+        super().__init__(**kwargs)
+        self.base = base
+
+    def switchToTab(self):
+        match self.text:
+            case "Tagging":
+                self.base.openTaggingPage()
+                pass
+            case "Search":
+                self.base.openSearchPage()
+                pass
+            case "Pallet":
+                self.base.openPalletPage()
+                pass
+
 class Base(Widget):
-    pass
+    openPage = None
+    currentPageName = ""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        taggingTab = Tab(self)
+        taggingTab.text = "Tagging"
+        searchTab = Tab(self)
+        searchTab.text = "Search"
+        palletTab = Tab(self)
+        palletTab.text = "Pallet"
+        self.tabPanel.add_widget(taggingTab)
+        self.tabPanel.add_widget(searchTab)
+        self.tabPanel.add_widget(palletTab)
+
+    def openTaggingPage(self):
+        if self.currentPageName == "Tagging":
+            return
+        if not self.openPage == None:
+            self.tab.remove_widget(self.openPage)
+        
+        tp = TaggingPage()
+        self.tab.add_widget(tp)
+        self.openPage = tp
+        tp.build()
+        self.currentPageName = "Tagging"
+
+    def openSearchPage(self):
+        if self.currentPageName == "Search":
+            return
+        if not self.openPage == None:
+            self.tab.remove_widget(self.openPage)
+        
+        sp = SearchPage()
+        self.tab.add_widget(sp)
+        self.openPage = sp
+        sp.build()
+        self.currentPageName = "Search"
+
+    def openPalletPage(self):
+        if self.currentPageName == "Pallet":
+            return
+        if not self.openPage == None:
+            self.tab.remove_widget(self.openPage)
+        
+        pp = PalletPage()
+        self.tab.add_widget(pp)
+        self.openPage = pp
+        pp.build()
+        self.currentPageName = "Pallet"
+
 
 class ImageSorterApp(App):
     def build(self):
         base = Base()
-        tp = TaggingPage()
-        base.tab.add_widget(tp)
-        tp.build()
+        base.openTaggingPage()
         return base
 
 if __name__ == "__main__":
