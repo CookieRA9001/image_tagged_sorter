@@ -3,6 +3,7 @@
     imageList2: imageList2
     imageList3: imageList3
     fullImageView: fullImageView
+    fullImageName: fullImageName
 
     PageLayout:
         size: (root.width, root.height)
@@ -52,8 +53,13 @@
 
             Image:
                 id: fullImageView
-                size_hint: (1,1)
+                size_hint: (1,0.95)
                 fit_mode: "contain"
+            
+            Label:
+                id: fullImageName
+                size_hint: (1,0.049) 
+                color: (0,0,0,1)         
 
            
     

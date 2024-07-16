@@ -18,6 +18,7 @@ Builder.load_file('objects/TagPopup.kv')
 Builder.load_file('objects/AddedTag.kv')
 Builder.load_file('objects/TagSelect.kv')
 Builder.load_file('objects/SearchedImage.kv')
+Builder.load_file('objects/FullImagePopup.kv')
 Builder.load_file('objects/PalletImage.kv')
 Builder.load_file('objects/Base.kv')
 Builder.load_file('objects/TaggingPage.kv')
@@ -40,22 +41,34 @@ if not os.path.exists("database/pallet"):
 TAGS = json.load(open('database/tags.json'))["tags"]
 TAGS = [t.lower() for t in TAGS]
 TAGGED_IMAGES = {}
+IMAGE_TAGS = {}
 IMAGES = []
 PATH = os.getcwd()+"\\database\\images\\"
 PALLET = []
-# to-do: load pallet from pallet folder
 for file in os.listdir("database\pallet"):
     filename = os.fsdecode(file)
     PALLET.append(filename)
-print(PALLET)
 
 for i in TAGS:
     if not os.path.exists("database/taggedFiles/" + i + ".json"):
         with open("database/taggedFiles/" + i + ".json", 'w') as file: 
             file.write("{\"images\": []}")
+    else:
+        # clean up
+        with open("database/taggedFiles/" + i + ".json", 'r+') as file: 
+            file_data = json.load(file)
+            file_data["images"] = list(set(file_data["images"]))
+            file_data["images"] = [x for x in file_data["images"] if os.path.exists("database/images/" + x)]
+            file.seek(0)
+            json.dump(file_data, file)
+            file.truncate()
+
     TAGGED_IMAGES[i] = json.load(open("database/taggedFiles/" + i + ".json"))["images"]
 
     for img in TAGGED_IMAGES[i]:
+        if not img in IMAGE_TAGS.keys():
+            IMAGE_TAGS[img] = []
+        IMAGE_TAGS[img].append(i)
         IMAGES.append(img)
     IMAGES = list(set(IMAGES))
 
@@ -87,7 +100,7 @@ class TagSelect(Button):
         self.taggingPage = tp
         self.bind(on_press=self.addTag)
 
-    def addTag(self, obj):
+    def addTag(self, obj = None):
         self.taggingPage.addTag(self.text)
         self.taggingPage.searchTags()
 
@@ -122,7 +135,9 @@ class TaggingPage(Widget):
         self.currentImageIndex = -1
         self.updateTagSelects(TAGS)
 
-    def searchTags(self, text = savedSearchText):
+    def searchTags(self, text = None):
+        if text == None:
+            text = self.savedSearchText
         self.savedSearchText = text
         res = [i for i in TAGS if text in i and not i in self.selectedTags] # Very inefficiant
         self.updateTagSelects(res)
@@ -157,7 +172,7 @@ class TaggingPage(Widget):
     def removeTag(self, tag):
         self.selectedTags.remove(tag)
 
-    def saveTaggedImage(self):
+    def saveTaggedImage(self, editFile = False):
         if self.currentImageIndex == -1:
             return
         
@@ -165,21 +180,42 @@ class TaggingPage(Widget):
         abspath = os.path.abspath(__file__)
         dname = os.path.dirname(abspath)
         os.chdir(dname)
+        old_file_name = os.path.basename(self.currentImage.source)
         new_file_name = self.imageNameInput.text
+        renameFile = False
+        
+        if editFile and not new_file_name == old_file_name:
+            renameFile = True
 
-        if os.path.exists("database/images/" + new_file_name):
+        if (not editFile or renameFile) and os.path.exists("database/images/" + new_file_name):
             self.imageNameInput.foreground_color = (1,0,0,1)
             return
 
-        shutil.copy(self.currentImage.source, "database/images/" + new_file_name)
+        if not editFile or renameFile:
+            shutil.copy(self.currentImage.source, "database/images/" + new_file_name)
+        if renameFile:
+            os.remove("database/images/" + old_file_name) 
         
+        if editFile:
+            IMAGE_TAGS.pop(old_file_name)
+            IMAGES.remove(old_file_name)
+        IMAGE_TAGS[new_file_name] = []
+        IMAGES.append(new_file_name)
+
         for tag in self.selectedTags:
+            if editFile and old_file_name in TAGGED_IMAGES[tag]:
+                TAGGED_IMAGES[tag].remove(old_file_name)
+            TAGGED_IMAGES[tag].append(new_file_name)
+            IMAGE_TAGS[new_file_name].append(tag)
             # soruce: https://www.geeksforgeeks.org/append-to-json-file-using-python/
             with open('database/taggedFiles/' + tag + ".json",'r+') as file:
                 file_data = json.load(file)
+                if editFile and old_file_name in file_data["images"]:
+                    file_data["images"].remove(old_file_name)
                 file_data["images"].append(new_file_name)
                 file.seek(0)
                 json.dump(file_data, file)
+                file.truncate()
 
         self.nextImage()
         self.imageNameInput.foreground_color = (0,0,0,1)
@@ -218,7 +254,7 @@ class TaggingPage(Widget):
     def resetImageTags(self):
         self.addedTagBox.clear_widgets()
         self.selectedTags = []
-        self.searchTags()
+        self.searchTagInput.text = ""
 
 class SearchedImage(Widget):
     searchPage = None
@@ -233,6 +269,46 @@ class SearchedImage(Widget):
             PALLET.append(img)
             self.searchPage.searchForImages()
             shutil.copy(self.img.source, "database/pallet/" + img)
+
+    def openImageFullView(self):
+        FullImagePopup(self).open()
+
+class FullImagePopup(Popup):
+    searchImage = None
+    taggingPage = None
+
+    def __init__(self, image, **kwargs):
+        super().__init__(**kwargs)
+        taggingPage = TaggingPage()
+        self.add_widget(taggingPage)
+        taggingPage.build()
+        self.searchImage = image
+        self.taggingPage = taggingPage
+
+        # prepare tagging page in popup
+        taggingPage.imageBoxBtn.text = ""
+        taggingPage.imageBoxBtn.disabled = True
+        taggingPage.currentImage.source = image.img.source
+        taggingPage.nextBtn.text = "Save"
+        taggingPage.nextBtn.bind(on_release=self.saveAndClose)
+        taggingPage.currentImageIndex = 0
+
+        # load image data
+        taggingPage.selectedImages = [image.img.source]
+        taggingPage.currentImage.source = taggingPage.selectedImages[0]
+        name = os.path.basename(taggingPage.selectedImages[0])
+        taggingPage.imageNameInput.text = name
+
+        for tag in IMAGE_TAGS[name]:
+            taggingPage.addTag(tag)
+
+        taggingPage.searchTags()
+
+
+    def saveAndClose(self, obj = None):
+        self.taggingPage.saveTaggedImage(True)
+        self.searchImage.searchPage.searchForImages()
+        self.dismiss()
 
 class SearchPage(Widget):
     filterTags = [] # "and" search
@@ -360,6 +436,7 @@ class PalletImage(Widget):
 
     def selectImage(self):
         self.palletPage.fullImageView.source = self.img.source
+        self.palletPage.fullImageName.text = os.path.basename(self.img.source)
 
 class PalletPage(Widget):
     def build(self):

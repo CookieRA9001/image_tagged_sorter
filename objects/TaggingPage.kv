@@ -5,10 +5,12 @@
     tagBox: tagBox
     addedTagBox: addedTagBox
     imageBoxBtn: imageBoxBtn
+    nextBtn: nextBtn
 
     GridLayout:
         cols: 2
         size: (root.width, root.height)
+        pos: root.pos
         
         FloatLayout:
             padding: (10, 10)
@@ -84,6 +86,7 @@
                         size: self.size
 
             Button:
+                id: nextBtn
                 size_hint: (1, None)
                 height: 40
                 text: "Next"
