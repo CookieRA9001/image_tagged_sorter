@@ -15,6 +15,7 @@ X add search page logic
 X make pallet page ui elements
 X add pallet page logic
 X save pallet images in a pallet folder
+X make the 3 image columns more equil with more dynamic logic
 * add image selected popup to search
 * add image tag editing popup with logic
 
@@ -27,4 +28,3 @@ Future:
 * saved pallets
 * load next 100 images
 * or/and/not search modes for each tag
-* make the 3 image columns more equil with more dynamic logic

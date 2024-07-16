@@ -274,14 +274,22 @@ class SearchPage(Widget):
         self.imageList1.clear_widgets()
         self.imageList2.clear_widgets()
         self.imageList3.clear_widgets()
+        il1_height = 0
+        il2_height = 0
+        il3_height = 0
         for img in self.loadedImage:
             loaded_img = SearchedImage(self)
             loaded_img.img.source = PATH + img
-            if index == 1:
+            img_height = 1/loaded_img.img.image_ratio
+            min_height = min(il1_height,il2_height,il3_height)
+            if min_height == il1_height:
+                il1_height += img_height
                 self.imageList1.add_widget(loaded_img)
-            elif index == 2:
+            elif min_height == il2_height:
+                il2_height += img_height
                 self.imageList2.add_widget(loaded_img)
-            elif index == 3:
+            elif min_height == il3_height:
+                il3_height += img_height
                 self.imageList3.add_widget(loaded_img)
             index += 1
             if index == 4:
@@ -365,14 +373,22 @@ class PalletPage(Widget):
         self.imageList1.clear_widgets()
         self.imageList2.clear_widgets()
         self.imageList3.clear_widgets()
+        il1_height = 0
+        il2_height = 0
+        il3_height = 0
         for img in PALLET:
             loaded_img = PalletImage(self)
             loaded_img.img.source = PATH + img
-            if index == 1:
+            img_height = 1/loaded_img.img.image_ratio
+            min_height = min(il1_height,il2_height,il3_height)
+            if min_height == il1_height:
+                il1_height += img_height
                 self.imageList1.add_widget(loaded_img)
-            elif index == 2:
+            elif min_height == il2_height:
+                il2_height += img_height
                 self.imageList2.add_widget(loaded_img)
-            elif index == 3:
+            elif min_height == il3_height:
+                il3_height += img_height
                 self.imageList3.add_widget(loaded_img)
             index += 1
             if index == 4:
