@@ -16,15 +16,15 @@ X make pallet page ui elements
 X add pallet page logic
 X save pallet images in a pallet folder
 X make the 3 image columns more equil with more dynamic logic
-* add image selected popup to search
-* add image tag editing popup with logic
-
+X add image selected popup to search
+X add image tag editing popup with logic
 
 Notes:
 * kv file added widgets will not get the class functions. only if they are added with code (Widget()).
 
 Future:
-* search blacklist images
+* add images to search blacklist
 * saved pallets
 * load next 100 images
 * or/and/not search modes for each tag
+* editable image list layout - colum count
