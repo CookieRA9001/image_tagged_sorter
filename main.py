@@ -83,11 +83,13 @@ class TagPopup(Popup):
         text = text.lower()
         
         if not text in TAGS: 
+            goToRoot()
             with open("database/taggedFiles/" + text + ".json", 'w') as file: 
                 file.write("{\"images\": []}")
             TAGS.append(text)
             with open("database/tags.json", "w") as f:
                 json.dump({"tags": TAGS}, f)
+            TAGGED_IMAGES[text] = []
 
         self.taggingPage.addTag(text)
         self.dismiss()
@@ -176,10 +178,7 @@ class TaggingPage(Widget):
         if self.currentImageIndex == -1:
             return
         
-        # change directory to script root
-        abspath = os.path.abspath(__file__)
-        dname = os.path.dirname(abspath)
-        os.chdir(dname)
+        goToRoot()
         old_file_name = os.path.basename(self.currentImage.source)
         new_file_name = self.imageNameInput.text
         renameFile = False
@@ -550,6 +549,12 @@ class ImageSorterApp(App):
         base = Base()
         base.openTaggingPage()
         return base
+
+def goToRoot():
+    # change directory to script root
+    abspath = os.path.abspath(__file__)
+    dname = os.path.dirname(abspath)
+    os.chdir(dname)
 
 if __name__ == "__main__":
     ImageSorterApp().run()

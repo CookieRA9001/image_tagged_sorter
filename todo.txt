@@ -19,6 +19,11 @@ X make the 3 image columns more equil with more dynamic logic
 X add image selected popup to search
 X add image tag editing popup with logic
 
+* fix scrolling
+* more tags at a time
+* scroll bar
+* fix tag sizing
+
 Notes:
 * kv file added widgets will not get the class functions. only if they are added with code (Widget()).
 
@@ -28,3 +33,4 @@ Future:
 * load next 100 images
 * or/and/not search modes for each tag
 * editable image list layout - colum count
+
