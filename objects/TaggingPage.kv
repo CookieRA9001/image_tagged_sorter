@@ -45,7 +45,7 @@
             BoxLayout:
                 size_hint: (1, None)
                 orientation: "vertical"
-                height: 160
+                height: 220
 
                 TextInput:
                     id: searchTagInput
@@ -55,8 +55,7 @@
                     on_text: root.searchTags(self.text)
 
                 StackLayout:
-                    id: tagBox
-                    height: 120
+                    height: 180
                     size_hint: (1, None)
                     orientation: "tb-lr"
 
@@ -70,11 +69,25 @@
                     TagSelect:
                         text: "Add New Tag"
                         on_release: root.openAddTagPopup()
+                        background_color: (0.75,0.75,0.75,1)
+
+                    ScrollView:
+                        size_hint: (1, None)
+                        do_scroll_y: True
+                        do_scroll_x: False
+                        height: 150
+                        width: self.parent.width
+                        bar_width: 3
+                        always_overscroll: False
+
+                        StackLayout:
+                            id: tagBox
+                            size_hint: (1, None)
 
             StackLayout:
                 id: addedTagBox
                 size_hint: (1, None)
-                height: root.height-290
+                height: root.height-360
                 spacing: 5
                 padding: 5
 

@@ -9,6 +9,9 @@ from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.lang import Builder
 
+CONFIG_SEARCHVIEW_IMAGE_COUNT = 40
+CONFIG_TAG_SEARCH_COUNT = 20
+
 if not os.path.exists("objects"):
     print("KV Object Dir is missing! Terrminating script")
     sys.exit()
@@ -115,7 +118,7 @@ class AddedTag(Widget):
 
     def setName(self, name):
         self.tagName = name
-        self.textWidth = len(name)*13
+        self.textWidth = len(name)*6
     
     def removeSelf(self):
         self.taggingPage.removeTag(self.tagName)
@@ -123,18 +126,21 @@ class AddedTag(Widget):
         self.taggingPage.searchTags()
 
 class TaggingPage(Widget):
-    tagSelects = [None, None, None]
+    tagSelects = []
     selectedTags = []
     savedSearchText = ""
     selectedImages = []
     currentImageIndex = -1
 
     def build(self):
-        self.tagSelects = [None, None, None]
+        self.tagSelects = []
         self.selectedTags = []
         self.savedSearchText = ""
         self.selectedImages = []
         self.currentImageIndex = -1
+
+        self.tagBox.bind(minimum_height=self.tagBox.setter('height'))
+
         self.updateTagSelects(TAGS)
 
     def searchTags(self, text = None):
@@ -145,20 +151,14 @@ class TaggingPage(Widget):
         self.updateTagSelects(res)
     
     def updateTagSelects(self, tags):
-        self.updateTagSelect(0, tags)
-        self.updateTagSelect(1, tags)
-        self.updateTagSelect(2, tags)
-    
-    def updateTagSelect(self, index, tags):
-        if len(tags) > index:
-            if self.tagSelects[index] == None:
-                self.tagSelects[index] = TagSelect(self)
-                self.tagBox.add_widget(self.tagSelects[index])
-            self.tagSelects[index].text = tags[index]
-            
-        elif not self.tagSelects[index] == None:
-            self.tagBox.remove_widget(self.tagSelects[index])
-            self.tagSelects[index] = None
+        for tagSelect in self.tagSelects:
+            self.tagBox.remove_widget(tagSelect)
+
+        for i in range(0, min(len(tags), CONFIG_TAG_SEARCH_COUNT)):
+            self.tagSelects.append(TagSelect(self))
+            self.tagBox.add_widget(self.tagSelects[i])
+            self.tagSelects[i].text = tags[i]
+        
         
     def openAddTagPopup(self):
         TagPopup(self).open()
@@ -329,7 +329,7 @@ class SearchPage(Widget):
         if len(self.filterTags) == 0:
             # to-do: remove the images that are in the pallet
             temp = [i for i in IMAGES if self.searchText in i and not i in PALLET]
-            for i in range(0, min(100, len(temp))):
+            for i in range(0, min(CONFIG_SEARCHVIEW_IMAGE_COUNT, len(temp))):
                 self.loadedImage.append(temp[i])
 
         else:
@@ -339,7 +339,7 @@ class SearchPage(Widget):
                 temp = list(set(temp).intersection(TAGGED_IMAGES[tag])) # brute force
             
             temp = [i for i in temp if self.searchText in i and not i in PALLET]
-            for i in range(0, min(100, len(temp))):
+            for i in range(0, min(CONFIG_SEARCHVIEW_IMAGE_COUNT, len(temp))):
                 self.loadedImage.append(temp[i])
 
         self.loadImages()
