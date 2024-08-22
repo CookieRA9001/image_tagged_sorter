@@ -33,4 +33,6 @@ Future:
 * load next 100 images
 * or/and/not search modes for each tag
 * editable image list layout - colum count
+* skip image in TaggingPage
+* bug: deleting a tag in search page refreshes the tag list but the tag search still has text in it that gets ignored
 
