@@ -48,6 +48,7 @@ IMAGE_TAGS = {}
 IMAGES = []
 PATH = os.getcwd()+"\\database\\images\\"
 PALLET = []
+SEARCH_BLACKLIST = []
 for file in os.listdir("database\pallet"):
     filename = os.fsdecode(file)
     PALLET.append(filename)
@@ -280,6 +281,12 @@ class SearchedImage(Widget):
             PALLET.append(img)
             self.searchPage.searchForImages()
             shutil.copy(self.img.source, "database/pallet/" + img)
+    
+    def removeFromSearch(self):
+        img = os.path.basename(self.img.source)
+        SEARCH_BLACKLIST.append(img)
+        self.searchPage.searchForImages()
+        self.searchPage.updateBlacklist()
 
     def openImageFullView(self):
         FullImagePopup(self).open()
@@ -315,7 +322,6 @@ class FullImagePopup(Popup):
 
         taggingPage.searchTags()
 
-
     def saveAndClose(self, obj = None):
         self.taggingPage.saveTaggedImage(True)
         self.searchImage.searchPage.searchForImages()
@@ -334,13 +340,14 @@ class SearchPage(Widget):
         self.imageList3.bind(minimum_height=self.imageList3.setter('height'))
         self.tagSelects = [None, None, None]
         self.clearFilters()
+        self.clearBlacklist()
 
     def searchForImages(self):
         self.loadedImage = []
 
         if len(self.filterTags) == 0:
             # to-do: remove the images that are in the pallet
-            temp = [i for i in IMAGES if self.searchText in i and not i in PALLET]
+            temp = [i for i in IMAGES if self.searchText in i and not i in PALLET and not i in SEARCH_BLACKLIST]
             for i in range(0, min(CONFIG_SEARCHVIEW_IMAGE_COUNT, len(temp))):
                 self.loadedImage.append(temp[i])
 
@@ -350,7 +357,7 @@ class SearchPage(Widget):
             for tag in self.filterTags:
                 temp = list(set(temp).intersection(TAGGED_IMAGES[tag])) # brute force
             
-            temp = [i for i in temp if self.searchText in i and not i in PALLET]
+            temp = [i for i in temp if self.searchText in i and not i in PALLET and not i in SEARCH_BLACKLIST]
             for i in range(0, min(CONFIG_SEARCHVIEW_IMAGE_COUNT, len(temp))):
                 self.loadedImage.append(temp[i])
 
@@ -395,6 +402,16 @@ class SearchPage(Widget):
         self.addedTagBox.clear_widgets()
         self.searchTags()
         self.searchForImages()
+    
+    def clearBlacklist(self):
+        global SEARCH_BLACKLIST
+        SEARCH_BLACKLIST = []
+        self.searchTags()
+        self.searchForImages()
+        self.updateBlacklist()
+
+    def updateBlacklist(self):
+        self.blacklistBtn.text = "Clear Blacklist [" + str(len(SEARCH_BLACKLIST)) + "]"
 
     def searchTags(self, text = tagSearchText):
         self.tagSearchText = text

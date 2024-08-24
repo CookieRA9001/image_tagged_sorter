@@ -6,6 +6,7 @@
     searchTagInput: searchTagInput
     tagBox: tagBox
     addedTagBox: addedTagBox
+    blacklistBtn: blacklistBtn
 
     GridLayout:
         cols: 2
@@ -85,7 +86,7 @@
             StackLayout:
                 id: addedTagBox
                 size_hint: (1, None)
-                height: root.height-260
+                height: root.height-300
                 spacing: 5
                 padding: 5
 
@@ -101,3 +102,10 @@
                 height: 40
                 text: "Clear"
                 on_release: root.clearFilters()
+            
+            Button:
+                id: blacklistBtn
+                size_hint: (1, None)
+                height: 30
+                text: "Clear Blacklist [0]"
+                on_release: root.clearBlacklist()

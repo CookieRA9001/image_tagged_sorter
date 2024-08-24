@@ -39,3 +39,14 @@
             valign: "middle"
             background_color: (0,0,0,0)
             on_release: root.addToPallet()
+        
+        Button:
+            text: "X"
+            color: (0,0,0,0.5)
+            size_hint: (None, None)
+            size: (40,40)
+            pos: (root.x, root.y)
+            halign: "center"
+            valign: "middle"
+            background_color: (0,0,0,0)
+            on_release: root.removeFromSearch()
