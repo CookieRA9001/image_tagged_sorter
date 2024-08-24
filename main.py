@@ -174,6 +174,13 @@ class TaggingPage(Widget):
     def removeTag(self, tag):
         self.selectedTags.remove(tag)
 
+    def skipImage(self):
+        if self.currentImageIndex == -1:
+            return
+        
+        self.nextImage()
+        self.imageNameInput.foreground_color = (0,0,0,1)
+
     def saveTaggedImage(self, editFile = False):
         if self.currentImageIndex == -1:
             return
