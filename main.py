@@ -99,14 +99,19 @@ class TagPopup(Popup):
 
 class TagSelect(Button):
     taggingPage = None
+    tagName = ""
 
     def __init__(self, tp, **kwargs):
         super().__init__(**kwargs)
         self.taggingPage = tp
         self.bind(on_press=self.addTag)
+    
+    def setTag(self, tag):
+        self.tagName = tag
+        self.text = tag + " [" + str(len(TAGGED_IMAGES[tag])) + "]"
 
     def addTag(self, obj = None):
-        self.taggingPage.addTag(self.text)
+        self.taggingPage.addTag(self.tagName)
         self.taggingPage.searchTags()
 
 class AddedTag(Widget):
@@ -157,7 +162,7 @@ class TaggingPage(Widget):
         for i in range(0, min(len(tags), CONFIG_TAG_SEARCH_COUNT)):
             self.tagSelects.append(TagSelect(self))
             self.tagBox.add_widget(self.tagSelects[i])
-            self.tagSelects[i].text = tags[i]
+            self.tagSelects[i].setTag(tags[i])
         
         
     def openAddTagPopup(self):
@@ -406,7 +411,7 @@ class SearchPage(Widget):
             if self.tagSelects[index] == None:
                 self.tagSelects[index] = TagSelect(self)
                 self.tagBox.add_widget(self.tagSelects[index])
-            self.tagSelects[index].text = tags[index]
+            self.tagSelects[index].setTag(tags[index])
             
         elif not self.tagSelects[index] == None:
             self.tagBox.remove_widget(self.tagSelects[index])
