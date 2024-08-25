@@ -12,7 +12,7 @@ from kivy.lang import Builder
 from kivy.clock import Clock
 from functools import partial
 
-CONFIG_SEARCHVIEW_IMAGE_COUNT = 40
+CONFIG_SEARCHVIEW_IMAGE_COUNT = 50
 CONFIG_UPDATE_SPEED = 60.0
 CONFIG_TAG_SEARCH_COUNT = 20
 
@@ -354,12 +354,14 @@ class SearchPage(Widget):
 
     def searchForImages(self):
         self.loadedImage = []
+        imagesRemaining = 0
 
         if len(self.filterTags) == 0:
             # to-do: remove the images that are in the pallet
             temp = [i for i in IMAGES if self.searchText in i and not i in PALLET and not i in SEARCH_BLACKLIST]
             for i in range(0, min(CONFIG_SEARCHVIEW_IMAGE_COUNT, len(temp))):
                 self.loadedImage.append(temp[i])
+            imagesRemaining = max(0, len(temp)-CONFIG_SEARCHVIEW_IMAGE_COUNT)
 
         else:
             # to-do: remove the images that are in the pallet
@@ -370,7 +372,9 @@ class SearchPage(Widget):
             temp = [i for i in temp if self.searchText in i and not i in PALLET and not i in SEARCH_BLACKLIST]
             for i in range(0, min(CONFIG_SEARCHVIEW_IMAGE_COUNT, len(temp))):
                 self.loadedImage.append(temp[i])
+            imagesRemaining = max(0, len(temp)-CONFIG_SEARCHVIEW_IMAGE_COUNT)
 
+        self.loadBtn.text = "Load More [" + str(imagesRemaining) + "]"
         self.loadImages()
     
     def loadImages(self):
@@ -381,7 +385,7 @@ class SearchPage(Widget):
         self.il1_height = 0
         self.il2_height = 0
         self.il3_height = 0
-        for i, img in enumerate(self.loadedImage):
+        for i in range(len(self.loadedImage)):
             UPDATE_QUEUE.append(partial(self.loadImage, self.loadedImage[i], self.id))
     
     def loadImage(self, img, caller_id):
@@ -415,6 +419,31 @@ class SearchPage(Widget):
         self.addedTagBox.clear_widgets()
         self.searchTags()
         self.searchForImages()
+    
+    def loadMoreImages(self):
+        currentImageCount = len(self.loadedImage)
+        imagesRemaining = 0
+
+        if len(self.filterTags) == 0:
+            temp = [i for i in IMAGES if self.searchText in i and not i in PALLET and not i in SEARCH_BLACKLIST and not i in self.loadedImage]
+            for i in range(0, min(CONFIG_SEARCHVIEW_IMAGE_COUNT, len(temp))):
+                self.loadedImage.append(temp[i])
+            imagesRemaining = max(0, len(temp)-CONFIG_SEARCHVIEW_IMAGE_COUNT)
+
+        else:
+            temp = TAGGED_IMAGES[self.filterTags[0]].copy()
+            for tag in self.filterTags:
+                temp = list(set(temp).intersection(TAGGED_IMAGES[tag])) # brute force
+            
+            temp = [i for i in temp if self.searchText in i and not i in PALLET and not i in SEARCH_BLACKLIST and not i in self.loadedImage]
+            for i in range(0, min(CONFIG_SEARCHVIEW_IMAGE_COUNT, len(temp))):
+                self.loadedImage.append(temp[i])
+            imagesRemaining = max(0, len(temp)-CONFIG_SEARCHVIEW_IMAGE_COUNT)
+
+        for i in range(currentImageCount, len(self.loadedImage)):
+            UPDATE_QUEUE.append(partial(self.loadImage, self.loadedImage[i], self.id))
+        
+        self.loadBtn.text = "Load More [" + str(imagesRemaining) + "]"
     
     def clearBlacklist(self):
         global SEARCH_BLACKLIST
