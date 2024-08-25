@@ -38,6 +38,9 @@ if not os.path.exists("database"):
 if not os.path.exists("database/tags.json"): 
     with open("database/tags.json", 'w') as file: 
         file.write("{\"tags\": []}")
+if not os.path.exists("database/categories.json"): 
+    with open("database/categories.json", 'w') as file: 
+        file.write("{\"categories\": {}}")
 if not os.path.exists("database/taggedFiles"):
     os.makedirs("database/taggedFiles")
 if not os.path.exists("database/images"):
@@ -50,6 +53,7 @@ TAGS = [t.lower() for t in TAGS]
 TAGGED_IMAGES = {}
 IMAGE_TAGS = {}
 IMAGES = []
+CATEGORIES = json.load(open('database/categories.json'))["categories"]
 PATH = os.getcwd()+"\\database\\images\\"
 PALLET = []
 SEARCH_BLACKLIST = []
@@ -70,7 +74,7 @@ for i in TAGS:
             file_data["images"] = list(set(file_data["images"]))
             file_data["images"] = [x for x in file_data["images"] if os.path.exists("database/images/" + x)]
             file.seek(0)
-            json.dump(file_data, file)
+            json.dump(file_data, file, indent=2)
             file.truncate()
 
     TAGGED_IMAGES[i] = json.load(open("database/taggedFiles/" + i + ".json"))["images"]
@@ -98,7 +102,7 @@ class TagPopup(Popup):
                 file.write("{\"images\": []}")
             TAGS.append(text)
             with open("database/tags.json", "w") as f:
-                json.dump({"tags": TAGS}, f)
+                json.dump({"tags": TAGS}, f, indent=2)
             TAGGED_IMAGES[text] = []
 
         self.taggingPage.addTag(text)
@@ -158,8 +162,18 @@ class TaggingPage(Widget):
     def searchTags(self, text = None):
         if text == None:
             text = self.savedSearchText
-        self.savedSearchText = text
-        res = [i for i in TAGS if text in i and not i in self.selectedTags] # Very inefficiant
+        res = []
+        if len(text)>0 and text[0] == '@':
+            cat_text = text[1:]
+            cats = [c for c in CATEGORIES if cat_text in c]
+            res = set(())
+            for c in cats:
+                for t in CATEGORIES[c]:
+                    res.add(t)
+            res = list(res)
+        else:
+            self.savedSearchText = text
+            res = [i for i in TAGS if text in i and not i in self.selectedTags] # Very inefficiant
         self.updateTagSelects(res)
     
     def updateTagSelects(self, tags):
@@ -232,7 +246,7 @@ class TaggingPage(Widget):
                     file_data["images"].remove(old_file_name)
                 file_data["images"].append(new_file_name)
                 file.seek(0)
-                json.dump(file_data, file)
+                json.dump(file_data, file, indent=2)
                 file.truncate()
 
         self.nextImage()
