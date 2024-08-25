@@ -3,13 +3,17 @@ import sys
 import json
 import shutil 
 import subprocess
+import uuid
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.popup import Popup
 from kivy.uix.button import Button
 from kivy.lang import Builder
+from kivy.clock import Clock
+from functools import partial
 
 CONFIG_SEARCHVIEW_IMAGE_COUNT = 40
+CONFIG_UPDATE_SPEED = 60.0
 CONFIG_TAG_SEARCH_COUNT = 20
 
 if not os.path.exists("objects"):
@@ -49,6 +53,8 @@ IMAGES = []
 PATH = os.getcwd()+"\\database\\images\\"
 PALLET = []
 SEARCH_BLACKLIST = []
+UPDATE_QUEUE = []
+
 for file in os.listdir("database\pallet"):
     filename = os.fsdecode(file)
     PALLET.append(filename)
@@ -333,6 +339,9 @@ class SearchPage(Widget):
     tagSearchText = ""
     loadedImage = []
     tagSelects = [None, None, None]
+    il1_height = 0
+    il2_height = 0
+    il3_height = 0
 
     def build(self):
         self.imageList1.bind(minimum_height=self.imageList1.setter('height'))
@@ -340,7 +349,8 @@ class SearchPage(Widget):
         self.imageList3.bind(minimum_height=self.imageList3.setter('height'))
         self.tagSelects = [None, None, None]
         self.clearFilters()
-        self.clearBlacklist()
+        global SEARCH_BLACKLIST
+        SEARCH_BLACKLIST = []
 
     def searchForImages(self):
         self.loadedImage = []
@@ -364,30 +374,33 @@ class SearchPage(Widget):
         self.loadImages()
     
     def loadImages(self):
-        index = 1
+        self.id = uuid.uuid4()
         self.imageList1.clear_widgets()
         self.imageList2.clear_widgets()
         self.imageList3.clear_widgets()
-        il1_height = 0
-        il2_height = 0
-        il3_height = 0
-        for img in self.loadedImage:
-            loaded_img = SearchedImage(self)
-            loaded_img.img.source = PATH + img
-            img_height = 1/loaded_img.img.image_ratio
-            min_height = min(il1_height,il2_height,il3_height)
-            if min_height == il1_height:
-                il1_height += img_height
-                self.imageList1.add_widget(loaded_img)
-            elif min_height == il2_height:
-                il2_height += img_height
-                self.imageList2.add_widget(loaded_img)
-            elif min_height == il3_height:
-                il3_height += img_height
-                self.imageList3.add_widget(loaded_img)
-            index += 1
-            if index == 4:
-                index = 1
+        self.il1_height = 0
+        self.il2_height = 0
+        self.il3_height = 0
+        for i, img in enumerate(self.loadedImage):
+            UPDATE_QUEUE.append(partial(self.loadImage, self.loadedImage[i], self.id))
+    
+    def loadImage(self, img, caller_id):
+        if self.id != caller_id:
+            raise UpdateSkipped()
+
+        loaded_img = SearchedImage(self)
+        loaded_img.img.source = PATH + img
+        img_height = 1/loaded_img.img.image_ratio
+        min_height = min(self.il1_height, self.il2_height, self.il3_height)
+        if min_height == self.il1_height:
+            self.il1_height += img_height
+            self.imageList1.add_widget(loaded_img)
+        elif min_height == self.il2_height:
+            self.il2_height += img_height
+            self.imageList2.add_widget(loaded_img)
+        elif min_height == self.il3_height:
+            self.il3_height += img_height
+            self.imageList3.add_widget(loaded_img)
 
     def searchByName(self, text = searchText):
         self.searchText = text
@@ -536,6 +549,7 @@ class Base(Widget):
         self.tabPanel.add_widget(taggingTab)
         self.tabPanel.add_widget(searchTab)
         self.tabPanel.add_widget(palletTab)
+        Clock.schedule_interval(update, 1.0 / CONFIG_UPDATE_SPEED)
 
     def openTaggingPage(self):
         if self.currentPageName == "Tagging":
@@ -584,6 +598,24 @@ def goToRoot():
     abspath = os.path.abspath(__file__)
     dname = os.path.dirname(abspath)
     os.chdir(dname)
+
+def update(dt):
+    global UPDATE_QUEUE
+
+    if len(UPDATE_QUEUE) == 0:
+        return
+    func = UPDATE_QUEUE.pop()
+
+    try:
+        func()
+        pass
+    except UpdateSkipped as e:
+        update(0)
+    except:
+        print("An exception occurred") 
+
+class UpdateSkipped(Exception):
+    pass
 
 if __name__ == "__main__":
     ImageSorterApp().run()
