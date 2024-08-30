@@ -17,6 +17,7 @@ CONFIG_SEARCHVIEW_IMAGE_COUNT = 50
 CONFIG_UPDATE_SPEED = 60.0
 CONFIG_TAG_SEARCH_COUNT = 20
 CONFIG_SCROLL_SPEED = 60
+CONFIG_AUTO_TAG_UNTAGGED_IMAGES = True
 
 Config.set('graphics', 'width', '800')
 Config.set('graphics', 'height', '600')
@@ -239,6 +240,9 @@ class TaggingPage(Widget):
             IMAGES.remove(old_file_name)
         IMAGE_TAGS[new_file_name] = []
         IMAGES.append(new_file_name)
+
+        if CONFIG_AUTO_TAG_UNTAGGED_IMAGES and len(self.selectedTags) == 0:
+            self.selectedTags.append("untagged")
 
         for tag in self.selectedTags:
             if editFile and old_file_name in TAGGED_IMAGES[tag]:
