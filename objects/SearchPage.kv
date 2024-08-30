@@ -8,16 +8,19 @@
     addedTagBox: addedTagBox
     blacklistBtn: blacklistBtn
     loadBtn: loadBtn
+    mainScrollView: mainScrollView
 
     GridLayout:
         cols: 2
         size: (root.width, root.height)
 
         ScrollView:
+            id: mainScrollView
             size_hint: (0.8, None)
             do_scroll_y: True
             do_scroll_x: False
             size: self.parent.size
+            always_overscroll: False
 
             StackLayout:
                 size_hint: (1, None)
@@ -79,7 +82,6 @@
                     on_text: root.searchTags(self.text)
 
                 StackLayout:
-                    id: tagBox
                     height: 90
                     size_hint: (1, None)
                     orientation: "tb-lr"
@@ -91,19 +93,45 @@
                             pos: self.pos
                             size: self.size
 
+                    ScrollView:
+                        size_hint: (1, None)
+                        do_scroll_y: True
+                        do_scroll_x: False
+                        height: 90
+                        width: self.parent.width
+                        bar_width: 3
+                        always_overscroll: False
+
+                        StackLayout:
+                            id: tagBox
+                            size_hint: (1, None)
+
             StackLayout:
-                id: addedTagBox
                 size_hint: (1, None)
                 height: root.height-300
-                spacing: 5
-                padding: 5
+                orientation: "tb-lr"
 
                 canvas:
                     Color:
-                        rgba: (0.9,0.9,0.9,1)
+                        rgba: (0.8,0.8,0.8,1)
                     Rectangle:
                         pos: self.pos
                         size: self.size
+                
+                ScrollView:
+                    size_hint: (1, None)
+                    do_scroll_y: True
+                    do_scroll_x: False
+                    height: root.height-300
+                    width: self.parent.width
+                    bar_width: 3
+                    always_overscroll: False
+
+                    StackLayout:
+                        id: addedTagBox
+                        size_hint: (1, None)
+                        spacing: 5
+                        padding: 5
 
             Button:
                 size_hint: (1, None)

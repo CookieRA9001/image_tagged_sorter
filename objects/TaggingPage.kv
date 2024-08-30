@@ -7,6 +7,7 @@
     imageBoxBtn: imageBoxBtn
     nextBtn: nextBtn
     skipBtn: skipBtn
+    botBtnGrid: botBtnGrid
 
     GridLayout:
         cols: 2
@@ -88,11 +89,9 @@
                             size_hint: (1, None)
 
             StackLayout:
-                id: addedTagBox
                 size_hint: (1, None)
                 height: root.height-360
-                spacing: 5
-                padding: 5
+                orientation: "tb-lr"
 
                 canvas:
                     Color:
@@ -100,8 +99,24 @@
                     Rectangle:
                         pos: self.pos
                         size: self.size
+                
+                ScrollView:
+                    size_hint: (1, None)
+                    do_scroll_y: True
+                    do_scroll_x: False
+                    height: root.height-360
+                    width: self.parent.width
+                    bar_width: 3
+                    always_overscroll: False
+
+                    StackLayout:
+                        id: addedTagBox
+                        size_hint: (1, None)
+                        spacing: 5
+                        padding: 5
 
             GridLayout:
+                id: botBtnGrid
                 size_hint: (1, None)
                 height: 40
                 cols: 2

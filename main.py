@@ -11,10 +11,15 @@ from kivy.uix.button import Button
 from kivy.lang import Builder
 from kivy.clock import Clock
 from functools import partial
+from kivy.config import Config
 
 CONFIG_SEARCHVIEW_IMAGE_COUNT = 50
 CONFIG_UPDATE_SPEED = 60.0
 CONFIG_TAG_SEARCH_COUNT = 20
+CONFIG_SCROLL_SPEED = 60
+
+Config.set('graphics', 'width', '800')
+Config.set('graphics', 'height', '600')
 
 if not os.path.exists("objects"):
     print("KV Object Dir is missing! Terrminating script")
@@ -156,6 +161,7 @@ class TaggingPage(Widget):
         self.currentImageIndex = -1
 
         self.tagBox.bind(minimum_height=self.tagBox.setter('height'))
+        self.addedTagBox.bind(minimum_height=self.addedTagBox.setter('height'))
 
         self.updateTagSelects(TAGS)
 
@@ -163,6 +169,7 @@ class TaggingPage(Widget):
         if text == None:
             text = self.savedSearchText
         res = []
+        self.savedSearchText = text
         if len(text)>0 and text[0] == '@':
             cat_text = text[1:]
             cats = [c for c in CATEGORIES if cat_text in c]
@@ -171,8 +178,8 @@ class TaggingPage(Widget):
                 for t in CATEGORIES[c]:
                     res.add(t)
             res = list(res)
+            res = [i for i in res if not i in self.selectedTags]
         else:
-            self.savedSearchText = text
             res = [i for i in TAGS if text in i and not i in self.selectedTags] # Very inefficiant
         self.updateTagSelects(res)
     
@@ -183,8 +190,7 @@ class TaggingPage(Widget):
         for i in range(0, min(len(tags), CONFIG_TAG_SEARCH_COUNT)):
             self.tagSelects.append(TagSelect(self))
             self.tagBox.add_widget(self.tagSelects[i])
-            self.tagSelects[i].setTag(tags[i])
-        
+            self.tagSelects[i].setTag(tags[i])    
         
     def openAddTagPopup(self):
         TagPopup(self).open()
@@ -330,6 +336,7 @@ class FullImagePopup(Popup):
         taggingPage.nextBtn.text = "Save"
         taggingPage.nextBtn.bind(on_release=self.saveAndClose)
         taggingPage.currentImageIndex = 0
+        taggingPage.botBtnGrid.remove_widget(taggingPage.skipBtn)
 
         # load image data
         taggingPage.selectedImages = [image.img.source]
@@ -352,7 +359,7 @@ class SearchPage(Widget):
     searchText = ""
     tagSearchText = ""
     loadedImage = []
-    tagSelects = [None, None, None]
+    tagSelects = []
     il1_height = 0
     il2_height = 0
     il3_height = 0
@@ -361,10 +368,14 @@ class SearchPage(Widget):
         self.imageList1.bind(minimum_height=self.imageList1.setter('height'))
         self.imageList2.bind(minimum_height=self.imageList2.setter('height'))
         self.imageList3.bind(minimum_height=self.imageList3.setter('height'))
-        self.tagSelects = [None, None, None]
+        self.tagBox.bind(minimum_height=self.tagBox.setter('height'))
+        self.addedTagBox.bind(minimum_height=self.addedTagBox.setter('height'))
+        self.tagSelects = []
         self.clearFilters()
         global SEARCH_BLACKLIST
         SEARCH_BLACKLIST = []
+        self.mainScrollView.scroll_wheel_distance = CONFIG_SCROLL_SPEED
+        self.updateTagSelects(TAGS)
 
     def searchForImages(self):
         self.loadedImage = []
@@ -469,26 +480,22 @@ class SearchPage(Widget):
     def updateBlacklist(self):
         self.blacklistBtn.text = "Clear Blacklist [" + str(len(SEARCH_BLACKLIST)) + "]"
 
-    def searchTags(self, text = tagSearchText):
-        self.tagSearchText = text
+    def searchTags(self, text = None):
+        if text == None:
+            text = self.tagSearchText
+        else:
+            self.tagSearchText = text
         res = [i for i in TAGS if text in i and not i in self.filterTags] # Very inefficiant
         self.updateTagSelects(res)
     
     def updateTagSelects(self, tags):
-        self.updateTagSelect(0, tags)
-        self.updateTagSelect(1, tags)
-        self.updateTagSelect(2, tags)
-    
-    def updateTagSelect(self, index, tags):
-        if len(tags) > index:
-            if self.tagSelects[index] == None:
-                self.tagSelects[index] = TagSelect(self)
-                self.tagBox.add_widget(self.tagSelects[index])
-            self.tagSelects[index].setTag(tags[index])
-            
-        elif not self.tagSelects[index] == None:
-            self.tagBox.remove_widget(self.tagSelects[index])
-            self.tagSelects[index] = None
+        for tagSelect in self.tagSelects:
+            self.tagBox.remove_widget(tagSelect)
+
+        for i in range(0, min(len(tags), CONFIG_TAG_SEARCH_COUNT)):
+            self.tagSelects.append(TagSelect(self))
+            self.tagBox.add_widget(self.tagSelects[i])
+            self.tagSelects[i].setTag(tags[i])
 
     def addTag(self, tag):
         if tag in self.filterTags: 

@@ -1,2 +1,1 @@
-CATEGORIES = []
-CATEGORY_TAGS = {}
+searchTags
