@@ -13,7 +13,7 @@ from kivy.clock import Clock
 from functools import partial
 from kivy.config import Config
 
-CONFIG_SEARCHVIEW_IMAGE_COUNT = 50
+CONFIG_SEARCHVIEW_IMAGE_COUNT = 10
 CONFIG_UPDATE_SPEED = 60.0
 CONFIG_TAG_SEARCH_COUNT = 20
 CONFIG_SCROLL_SPEED = 60
@@ -316,6 +316,7 @@ class TaggingPage(Widget):
 
 class SearchedImage(Widget):
     searchPage = None
+    myColumn = 0
 
     def __init__(self, page, **kwargs):
         self.searchPage = page
@@ -331,8 +332,19 @@ class SearchedImage(Widget):
     def removeFromSearch(self):
         img = os.path.basename(self.img.source)
         SEARCH_BLACKLIST.append(img)
-        self.searchPage.searchForImages()
+        #self.searchPage.searchForImages()
         self.searchPage.updateBlacklist()
+        self.parent.remove_widget(self)
+        img_height = 1/self.img.image_ratio
+        match self.myColumn:
+            case 1:
+                self.searchPage.il1_height -= img_height
+            case 2:
+                self.searchPage.il2_height -= img_height
+            case 3:
+                self.searchPage.il3_height -= img_height
+            case _:
+                print("Error: missing column number!")
 
     def openImageFullView(self):
         FullImagePopup(self).open()
@@ -444,11 +456,14 @@ class SearchPage(Widget):
         min_height = min(self.il1_height, self.il2_height, self.il3_height)
         if min_height == self.il1_height:
             self.il1_height += img_height
+            loaded_img.myColumn = 1
             self.imageList1.add_widget(loaded_img)
         elif min_height == self.il2_height:
+            loaded_img.myColumn = 2
             self.il2_height += img_height
             self.imageList2.add_widget(loaded_img)
         elif min_height == self.il3_height:
+            loaded_img.myColumn = 3
             self.il3_height += img_height
             self.imageList3.add_widget(loaded_img)
 
