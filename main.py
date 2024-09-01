@@ -215,6 +215,8 @@ class TaggingPage(Widget):
         self.imageNameInput.foreground_color = (0,0,0,1)
 
     def saveTaggedImage(self, editFile = False):
+        global IMAGES, IMAGE_TAGS, TAGGED_IMAGES
+
         if self.currentImageIndex == -1:
             return
         
@@ -236,8 +238,24 @@ class TaggingPage(Widget):
             os.remove("database/images/" + old_file_name) 
         
         if editFile:
+            # clear old data from data lists and json files
+            for tag in IMAGE_TAGS[old_file_name]:
+                TAGGED_IMAGES[tag].remove(old_file_name)
+                
+                if tag in self.selectedTags:
+                    continue
+
+                with open('database/taggedFiles/' + tag + ".json",'r+') as file:
+                    file_data = json.load(file)
+                    if old_file_name in file_data["images"]:
+                        file_data["images"].remove(old_file_name)
+                    file.seek(0)
+                    json.dump(file_data, file, indent=2)
+                    file.truncate()      
+
             IMAGE_TAGS.pop(old_file_name)
             IMAGES.remove(old_file_name)
+        
         IMAGE_TAGS[new_file_name] = []
         IMAGES.append(new_file_name)
 
@@ -245,8 +263,6 @@ class TaggingPage(Widget):
             self.selectedTags.append("untagged")
 
         for tag in self.selectedTags:
-            if editFile and old_file_name in TAGGED_IMAGES[tag]:
-                TAGGED_IMAGES[tag].remove(old_file_name)
             TAGGED_IMAGES[tag].append(new_file_name)
             IMAGE_TAGS[new_file_name].append(tag)
             # soruce: https://www.geeksforgeeks.org/append-to-json-file-using-python/
@@ -382,6 +398,7 @@ class SearchPage(Widget):
         self.updateTagSelects(TAGS)
 
     def searchForImages(self):
+        global IMAGES, TAGGED_IMAGES
         self.loadedImage = []
         imagesRemaining = 0
 
