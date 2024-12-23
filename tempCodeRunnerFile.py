@@ -1,1 +1,1 @@
-searchTags
+removeFromSearch

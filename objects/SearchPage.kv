@@ -9,6 +9,7 @@
     blacklistBtn: blacklistBtn
     loadBtn: loadBtn
     mainScrollView: mainScrollView
+    blacklistTagsBtn: blacklistTagsBtn
 
     GridLayout:
         cols: 2
@@ -106,9 +107,16 @@
                             id: tagBox
                             size_hint: (1, None)
 
+            Button:
+                id: blacklistTagsBtn
+                size_hint: (1, None)
+                height: 30
+                text: "Tag Blacklist [OFF]"
+                on_release: root.switchTagMod_blacklist()
+
             StackLayout:
                 size_hint: (1, None)
-                height: root.height-300
+                height: root.height-340
                 orientation: "tb-lr"
 
                 canvas:
@@ -122,7 +130,7 @@
                     size_hint: (1, None)
                     do_scroll_y: True
                     do_scroll_x: False
-                    height: root.height-300
+                    height: root.height-340
                     width: self.parent.width
                     bar_width: 3
                     always_overscroll: False

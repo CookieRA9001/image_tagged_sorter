@@ -13,7 +13,7 @@ from kivy.clock import Clock
 from functools import partial
 from kivy.config import Config
 
-CONFIG_SEARCHVIEW_IMAGE_COUNT = 10
+CONFIG_SEARCHVIEW_IMAGE_COUNT = 100
 CONFIG_UPDATE_SPEED = 60.0
 CONFIG_TAG_SEARCH_COUNT = 20
 CONFIG_SCROLL_SPEED = 60
@@ -140,7 +140,7 @@ class AddedTag(Widget):
 
     def setName(self, name):
         self.tagName = name
-        self.textWidth = len(name)*6
+        self.textWidth = len(name)*7
     
     def removeSelf(self):
         self.taggingPage.removeTag(self.tagName)
@@ -324,9 +324,10 @@ class SearchedImage(Widget):
 
     def addToPallet(self):
         img = os.path.basename(self.img.source)
+        self.removeSelfFromList()
         if not img in PALLET:
             PALLET.append(img)
-            self.searchPage.searchForImages()
+            #self.searchPage.searchForImages()
             shutil.copy(self.img.source, "database/pallet/" + img)
     
     def removeFromSearch(self):
@@ -334,6 +335,12 @@ class SearchedImage(Widget):
         SEARCH_BLACKLIST.append(img)
         #self.searchPage.searchForImages()
         self.searchPage.updateBlacklist()
+        self.removeSelfFromList()
+
+    def openImageFullView(self):
+        FullImagePopup(self).open()
+    
+    def removeSelfFromList(self):
         self.parent.remove_widget(self)
         img_height = 1/self.img.image_ratio
         match self.myColumn:
@@ -345,9 +352,6 @@ class SearchedImage(Widget):
                 self.searchPage.il3_height -= img_height
             case _:
                 print("Error: missing column number!")
-
-    def openImageFullView(self):
-        FullImagePopup(self).open()
 
 class FullImagePopup(Popup):
     searchImage = None
@@ -382,9 +386,32 @@ class FullImagePopup(Popup):
         taggingPage.searchTags()
 
     def saveAndClose(self, obj = None):
+        name = os.path.basename(self.taggingPage.selectedImages[0])
+
         self.taggingPage.saveTaggedImage(True)
-        self.searchImage.searchPage.searchForImages()
         self.dismiss()
+
+        # check if it still applies to the filter
+        # to-do: update when adding more filtering options
+        filtered = False
+        if len(self.searchImage.searchPage.filterTags) != 0:
+            filteredSet = set(self.searchImage.searchPage.filterTags)
+            if not self.searchImage.searchPage.tagBlackListMode:
+                filtered = True
+                for tag in IMAGE_TAGS[name]:
+                    if tag in filteredSet:
+                        filtered = False
+                        break
+            else: # select only the images that dont have the tags
+                for tag in IMAGE_TAGS[name]:
+                    if tag in filteredSet:
+                        filtered = True
+                        break
+
+        # if not, remove it
+        if (not filtered): return
+        
+        self.searchImage.removeSelfFromList()
 
 class SearchPage(Widget):
     filterTags = [] # "and" search
@@ -395,6 +422,7 @@ class SearchPage(Widget):
     il1_height = 0
     il2_height = 0
     il3_height = 0
+    tagBlackListMode = False
 
     def build(self):
         self.imageList1.bind(minimum_height=self.imageList1.setter('height'))
@@ -415,17 +443,21 @@ class SearchPage(Widget):
         imagesRemaining = 0
 
         if len(self.filterTags) == 0:
-            # to-do: remove the images that are in the pallet
             temp = [i for i in IMAGES if self.searchText in i and not i in PALLET and not i in SEARCH_BLACKLIST]
             for i in range(0, min(CONFIG_SEARCHVIEW_IMAGE_COUNT, len(temp))):
                 self.loadedImage.append(temp[i])
             imagesRemaining = max(0, len(temp)-CONFIG_SEARCHVIEW_IMAGE_COUNT)
 
         else:
-            # to-do: remove the images that are in the pallet
-            temp = TAGGED_IMAGES[self.filterTags[0]].copy()
-            for tag in self.filterTags:
-                temp = list(set(temp).intersection(TAGGED_IMAGES[tag])) # brute force
+            temp = []
+            if not self.tagBlackListMode:
+                temp = TAGGED_IMAGES[self.filterTags[0]].copy()
+                for tag in self.filterTags:
+                    temp = list(set(temp).intersection(TAGGED_IMAGES[tag])) # brute force
+            else: # select only the images that dont have the tags
+                temp = IMAGES.copy()
+                for tag in self.filterTags:
+                    temp = list(set(temp).difference(TAGGED_IMAGES[tag])) # brute force
             
             temp = [i for i in temp if self.searchText in i and not i in PALLET and not i in SEARCH_BLACKLIST]
             for i in range(0, min(CONFIG_SEARCHVIEW_IMAGE_COUNT, len(temp))):
@@ -492,9 +524,15 @@ class SearchPage(Widget):
             imagesRemaining = max(0, len(temp)-CONFIG_SEARCHVIEW_IMAGE_COUNT)
 
         else:
-            temp = TAGGED_IMAGES[self.filterTags[0]].copy()
-            for tag in self.filterTags:
-                temp = list(set(temp).intersection(TAGGED_IMAGES[tag])) # brute force
+            temp = []
+            if not self.tagBlackListMode:
+                temp = TAGGED_IMAGES[self.filterTags[0]].copy()
+                for tag in self.filterTags:
+                    temp = list(set(temp).intersection(TAGGED_IMAGES[tag])) # brute force
+            else: # select only the images that dont have the tags
+                temp = IMAGES.copy()
+                for tag in self.filterTags:
+                    temp = list(set(temp).difference(TAGGED_IMAGES[tag])) # brute force
             
             temp = [i for i in temp if self.searchText in i and not i in PALLET and not i in SEARCH_BLACKLIST and not i in self.loadedImage]
             for i in range(0, min(CONFIG_SEARCHVIEW_IMAGE_COUNT, len(temp))):
@@ -506,6 +544,15 @@ class SearchPage(Widget):
         
         self.loadBtn.text = "Load More [" + str(imagesRemaining) + "]"
     
+    def switchTagMod_blacklist(self):
+        self.tagBlackListMode = not self.tagBlackListMode
+        if self.tagBlackListMode:
+            self.blacklistTagsBtn.text = "Tag Blacklist [ON]"
+        else:
+            self.blacklistTagsBtn.text = "Tag Blacklist [OFF]"
+        self.searchForImages()
+        
+
     def clearBlacklist(self):
         global SEARCH_BLACKLIST
         SEARCH_BLACKLIST = []
