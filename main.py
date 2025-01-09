@@ -596,9 +596,11 @@ class SearchPage(Widget):
 class PalletImage(Widget):
     palletPage = None
     selectedImageElement = None
+    palletIndex = 0
 
-    def __init__(self, page, **kwargs):
+    def __init__(self, page, index, **kwargs):
         self.palletPage = page
+        self.palletIndex = index
         super().__init__(**kwargs)
 
     def removeFromPallet(self):
@@ -609,10 +611,14 @@ class PalletImage(Widget):
             os.remove("database/pallet/" + img) 
 
     def selectImage(self):
-        self.palletPage.fullImageView.source = self.img.source
-        self.palletPage.fullImageName.text = os.path.basename(self.img.source)
+        self.palletPage.setMainImage(self.palletIndex)
+        #self.palletPage.fullImageView.source = self.img.source
+        #self.palletPage.fullImageName.text = os.path.basename(self.img.source)
 
 class PalletPage(Widget):
+    palletImageArray = []
+    currentViewIndex = 0
+
     def build(self):
         self.imageList1.bind(minimum_height=self.imageList1.setter('height'))
         self.imageList2.bind(minimum_height=self.imageList2.setter('height'))
@@ -620,6 +626,7 @@ class PalletPage(Widget):
         self.loadImages()
 
     def loadImages(self):
+        self.palletImageArray = []
         index = 1
         self.imageList1.clear_widgets()
         self.imageList2.clear_widgets()
@@ -628,7 +635,8 @@ class PalletPage(Widget):
         il2_height = 0
         il3_height = 0
         for img in PALLET:
-            loaded_img = PalletImage(self)
+            loaded_img = PalletImage(self, len(self.palletImageArray))
+            self.palletImageArray.append(loaded_img)
             loaded_img.img.source = PATH + img
             img_height = 1/loaded_img.img.image_ratio
             min_height = min(il1_height,il2_height,il3_height)
@@ -647,6 +655,18 @@ class PalletPage(Widget):
 
     def openPalletFolder(self):
         subprocess.Popen(r'explorer "' + os.getcwd()+"\\database\\pallet\\")
+    
+    def nextImage(self):
+        self.setMainImage(self.currentViewIndex+1)
+
+    def prevImage(self):
+        self.setMainImage(self.currentViewIndex-1)
+
+    def setMainImage(self, index):
+        self.currentViewIndex = index % len(self.palletImageArray)
+        img = self.palletImageArray[self.currentViewIndex].img
+        self.fullImageView.source = img.source
+        self.fullImageName.text = os.path.basename(img.source)
 
 class Tab(Button):
     base = None

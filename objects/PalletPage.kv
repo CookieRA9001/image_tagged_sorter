@@ -51,15 +51,32 @@
                     pos: self.pos
                     size: self.size
 
-            Image:
-                id: fullImageView
-                size_hint: (1,0.95)
-                fit_mode: "contain"
-            
-            Label:
-                id: fullImageName
-                size_hint: (1,0.049) 
-                color: (0,0,0,1)         
+            BoxLayout:
+                orientation: 'horizontal'
+
+                Button:
+                    text: "<"
+                    size_hint: (0.03,1)
+                    on_release: root.prevImage()
+
+                BoxLayout:
+                    orientation: 'vertical'
+                    size_hint: (0.9,1)
+
+                    Image:
+                        id: fullImageView
+                        size_hint: (1,0.98)
+                        fit_mode: "contain"
+                    
+                    Label:
+                        id: fullImageName
+                        size_hint: (1,0.019) 
+                        color: (0,0,0,1)      
+
+                Button:
+                    text: ">"
+                    size_hint: (0.03,1)
+                    on_release: root.nextImage()   
 
            
     
