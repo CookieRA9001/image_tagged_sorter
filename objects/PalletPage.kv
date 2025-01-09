@@ -2,6 +2,7 @@
     fullImageView: fullImageView
     fullImageName: fullImageName
     palletColumnLayout: palletColumnLayout
+    columnCountInput: columnCountInput
 
     PageLayout:
         size: (root.width, root.height)
@@ -15,15 +16,24 @@
 
                 Button:
                     text: "Open Folder"
-                    size_hint: (0.5,1)
+                    size_hint: (0.6,1)
                     on_release: root.openPalletFolder()
                 Button:
                     text: "Col--"
-                    size_hint: (0.245,1)
+                    size_hint: (0.095,1)
                     on_release: root.removeColum()
+
+                TextInput:
+                    id: columnCountInput
+                    size_hint: (0.195,1)
+                    multiline: False
+                    font_size: 18
+                    input_filter: 'int'
+                    on_text_validate: root.setColumnCount(self.text)
+                    
                 Button:
                     text: "Col++"
-                    size_hint: (0.245,1)
+                    size_hint: (0.095,1)
                     on_release: root.addColum()
 
             ScrollView:

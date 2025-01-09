@@ -651,12 +651,25 @@ class PalletPage(Widget):
         if loadImagesAfterAdd:
             self.loadImages() # heavy load on click
     
-    def removeColum(self):
+    def removeColum(self, loadImagesAfterAdd = True):
         if self.currentColumnCount == 1: return
         self.currentColumnCount -= 1
         self.palletColumnLayout.remove_widget(self.palletColumnArray.pop(self.currentColumnCount))
         # heavy load on click. more optimal solution would be to take the list of images from the column and redistribute them to the others
-        self.loadImages() 
+        if loadImagesAfterAdd:
+            self.loadImages()
+    
+    def setColumnCount(self, text):
+        count = max((int)(text),1)
+        if count == self.currentColumnCount:
+            if text != (str)(self.currentColumnCount):
+                self.columnCountInput.text = (str)(self.currentColumnCount)
+            return
+        while(count > self.currentColumnCount):
+            self.addColum(False)
+        while(count < self.currentColumnCount):
+            self.removeColum(False)
+        self.loadImages()
 
     def loadImages(self):
         self.palletImageArray = []
@@ -676,6 +689,7 @@ class PalletPage(Widget):
         
         # the 1.05 is for the non-dynamic 10px spacing between images
         self.palletColumnLayout.height = max([col.targetHeight for col in self.palletColumnArray]) * 1.05 
+        self.columnCountInput.text = (str)(self.currentColumnCount)
 
     def openPalletFolder(self):
         subprocess.Popen(r'explorer "' + os.getcwd()+"\\database\\pallet\\")
