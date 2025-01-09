@@ -3,11 +3,13 @@ import sys
 import json
 import shutil 
 import subprocess
+from typing import List
 import uuid
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.popup import Popup
 from kivy.uix.button import Button
+from kivy.uix.stacklayout import StackLayout
 from kivy.lang import Builder
 from kivy.clock import Clock
 from functools import partial
@@ -18,6 +20,7 @@ CONFIG_UPDATE_SPEED = 60.0
 CONFIG_TAG_SEARCH_COUNT = 20
 CONFIG_SCROLL_SPEED = 60
 CONFIG_AUTO_TAG_UNTAGGED_IMAGES = True
+CONFIG_DEFAULT_PALLET_COLUMN_COUNT = 3
 
 Config.set('graphics', 'width', '800')
 Config.set('graphics', 'height', '600')
@@ -33,6 +36,7 @@ Builder.load_file('objects/TagSelect.kv')
 Builder.load_file('objects/SearchedImage.kv')
 Builder.load_file('objects/FullImagePopup.kv')
 Builder.load_file('objects/PalletImage.kv')
+Builder.load_file('objects/PalletColumn.kv')
 Builder.load_file('objects/Base.kv')
 Builder.load_file('objects/TaggingPage.kv')
 Builder.load_file('objects/SearchPage.kv')
@@ -593,6 +597,18 @@ class SearchPage(Widget):
         self.filterTags.remove(tag)
         self.searchForImages()
 
+class PalletColumn(StackLayout):
+    palletPage = None
+    targetHeight: int = 0
+
+    def __init__(self, page, index, nameScem = "imageList", **kwargs):
+        self.palletPage = page
+        self.id = nameScem+(str)(index)
+        super().__init__(**kwargs)
+
+    def updateSize(self, newColCount):
+        self.size_hint = (1/newColCount, None)
+
 class PalletImage(Widget):
     palletPage = None
     selectedImageElement = None
@@ -612,46 +628,54 @@ class PalletImage(Widget):
 
     def selectImage(self):
         self.palletPage.setMainImage(self.palletIndex)
-        #self.palletPage.fullImageView.source = self.img.source
-        #self.palletPage.fullImageName.text = os.path.basename(self.img.source)
 
 class PalletPage(Widget):
-    palletImageArray = []
+    palletImageArray: List[PalletImage] = []
+    palletColumnArray: List[PalletColumn] = []
     currentViewIndex = 0
+    currentColumnCount = 0 #CONFIG_DEFAULT_PALLET_COLUMN_COUNT
 
     def build(self):
-        self.imageList1.bind(minimum_height=self.imageList1.setter('height'))
-        self.imageList2.bind(minimum_height=self.imageList2.setter('height'))
-        self.imageList3.bind(minimum_height=self.imageList3.setter('height'))
+        self.palletColumnLayout.bind(minimum_height=self.palletColumnLayout.setter('height'))
+        for i in range(CONFIG_DEFAULT_PALLET_COLUMN_COUNT):
+            self.addColum(False)
         self.loadImages()
+
+    def addColum(self, loadImagesAfterAdd = True):
+        newColumn = PalletColumn(self, self.currentColumnCount)
+        self.palletColumnLayout.add_widget(newColumn)
+        self.palletColumnArray.append(newColumn)
+        newColumn.bind(minimum_height=newColumn.setter('height'))
+        self.currentColumnCount += 1
+
+        if loadImagesAfterAdd:
+            self.loadImages() # heavy load on click
+    
+    def removeColum(self):
+        if self.currentColumnCount == 1: return
+        self.currentColumnCount -= 1
+        self.palletColumnLayout.remove_widget(self.palletColumnArray.pop(self.currentColumnCount))
+        # heavy load on click. more optimal solution would be to take the list of images from the column and redistribute them to the others
+        self.loadImages() 
 
     def loadImages(self):
         self.palletImageArray = []
-        index = 1
-        self.imageList1.clear_widgets()
-        self.imageList2.clear_widgets()
-        self.imageList3.clear_widgets()
-        il1_height = 0
-        il2_height = 0
-        il3_height = 0
+        for col in self.palletColumnArray:
+            col.clear_widgets()
+            col.targetHeight = 0
+            col.updateSize(self.currentColumnCount)
+        
         for img in PALLET:
             loaded_img = PalletImage(self, len(self.palletImageArray))
             self.palletImageArray.append(loaded_img)
             loaded_img.img.source = PATH + img
             img_height = 1/loaded_img.img.image_ratio
-            min_height = min(il1_height,il2_height,il3_height)
-            if min_height == il1_height:
-                il1_height += img_height
-                self.imageList1.add_widget(loaded_img)
-            elif min_height == il2_height:
-                il2_height += img_height
-                self.imageList2.add_widget(loaded_img)
-            elif min_height == il3_height:
-                il3_height += img_height
-                self.imageList3.add_widget(loaded_img)
-            index += 1
-            if index == 4:
-                index = 1
+            shortestCol = min(self.palletColumnArray, key=lambda r: r.targetHeight)
+            shortestCol.targetHeight += img_height
+            shortestCol.add_widget(loaded_img)
+        
+        # the 1.05 is for the non-dynamic 10px spacing between images
+        self.palletColumnLayout.height = max([col.targetHeight for col in self.palletColumnArray]) * 1.05 
 
     def openPalletFolder(self):
         subprocess.Popen(r'explorer "' + os.getcwd()+"\\database\\pallet\\")

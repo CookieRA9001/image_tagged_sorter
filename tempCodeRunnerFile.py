@@ -1,1 +1,1 @@
-removeFromSearch
+currentColumnCount
