@@ -15,7 +15,7 @@ from kivy.clock import Clock
 from functools import partial
 from kivy.config import Config
 
-CONFIG_SEARCHVIEW_IMAGE_COUNT = 100
+CONFIG_SEARCHVIEW_IMAGE_COUNT = 50
 CONFIG_UPDATE_SPEED = 60.0
 CONFIG_TAG_SEARCH_COUNT = 20
 CONFIG_SCROLL_SPEED = 60
@@ -317,6 +317,13 @@ class TaggingPage(Widget):
         self.addedTagBox.clear_widgets()
         self.selectedTags = []
         self.searchTagInput.text = ""
+
+    def addBulkTag(self, bulkTags):
+        tags = bulkTags.split(", ")
+        for t in tags:
+            self.addTag(t)
+        self.bulkTagInput.text = ""
+        self.searchTags(self.searchTagInput.text)
 
 class SearchedImage(Widget):
     searchPage = None
