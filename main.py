@@ -741,6 +741,9 @@ class Tab(Button):
             case "Pallet":
                 self.base.openPalletPage()
                 pass
+            case "List Tagging":
+                self.base.openListTaggingPage()
+                pass
 
 class Base(Widget):
     openPage = None
@@ -754,9 +757,12 @@ class Base(Widget):
         searchTab.text = "Search"
         palletTab = Tab(self)
         palletTab.text = "Pallet"
+        listTab = Tab(self)
+        listTab.text = "List Tagging"
         self.tabPanel.add_widget(taggingTab)
         self.tabPanel.add_widget(searchTab)
         self.tabPanel.add_widget(palletTab)
+        self.tabPanel.add_widget(listTab)
         Clock.schedule_interval(update, 1.0 / CONFIG_UPDATE_SPEED)
 
     def openTaggingPage(self):
@@ -794,6 +800,18 @@ class Base(Widget):
         self.openPage = pp
         pp.build()
         self.currentPageName = "Pallet"
+    
+    def openListTaggingPage(self):
+        if self.currentPageName == "List Tagging":
+            return
+        if not self.openPage == None:
+            self.tab.remove_widget(self.openPage)
+        
+        pp = PalletPage()
+        self.tab.add_widget(pp)
+        self.openPage = pp
+        pp.build()
+        self.currentPageName = "List Tagging"
 
 class ImageSorterApp(App):
     def build(self):
