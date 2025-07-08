@@ -9,6 +9,7 @@
     skipBtn: skipBtn
     botBtnGrid: botBtnGrid
     bulkTagInput: bulkTagInput
+    llmTaggingBtn: llmTaggingBtn
 
     GridLayout:
         cols: 2
@@ -101,13 +102,25 @@
                         pos: self.pos
                         size: self.size
                 
-                TextInput:
-                    id: bulkTagInput
-                    multiline: False
-                    on_text_validate: root.addBulkTag(self.text)
+                GridLayout:
                     size_hint: (1, None)
                     height: 40
-                    hint_text: "bulk, tag, input, here"
+                    cols: 2
+
+                    TextInput:
+                        id: bulkTagInput
+                        multiline: False
+                        on_text_validate: root.addBulkTag(self.text)
+                        size_hint: (0.8, 1)
+                        height: 40
+                        hint_text: "bulk, tag, input, here"
+                    
+                    Button:
+                        id: llmTaggingBtn
+                        size_hint: (0.2, 1)
+                        text: "✨"
+                        font_name: "seguiemj"
+                        on_release: root.llmTag()
 
                 ScrollView:
                     size_hint: (1, None)

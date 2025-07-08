@@ -14,6 +14,7 @@ from kivy.lang import Builder
 from kivy.clock import Clock
 from functools import partial
 from kivy.config import Config
+import llmImageTagger
 
 CONFIG_SEARCHVIEW_IMAGE_COUNT = 50
 CONFIG_UPDATE_SPEED = 60.0
@@ -59,6 +60,7 @@ if not os.path.exists("database/pallet"):
     os.makedirs("database/pallet")
 
 TAGS = json.load(open('database/tags.json'))["tags"]
+AUTO_TAGS = json.load(open('database/llm_tags.json'))["tags"]
 TAGS = [t.lower() for t in TAGS]
 TAGGED_IMAGES = {}
 IMAGE_TAGS = {}
@@ -169,6 +171,7 @@ class TaggingPage(Widget):
         self.addedTagBox.bind(minimum_height=self.addedTagBox.setter('height'))
 
         self.updateTagSelects(TAGS)
+        self.outOfImages()
 
     def searchTags(self, text = None):
         if text == None:
@@ -324,6 +327,13 @@ class TaggingPage(Widget):
             self.addTag(t)
         self.bulkTagInput.text = ""
         self.searchTags(self.searchTagInput.text)
+    
+    def llmTag(self):
+        img_path = self.currentImage.source
+        if img_path == "":
+            return
+        self.addBulkTag(llmImageTagger.get_tags_from_image(img_path,AUTO_TAGS))
+
 
 class SearchedImage(Widget):
     searchPage = None
